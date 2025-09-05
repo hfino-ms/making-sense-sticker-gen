@@ -1,11 +1,9 @@
-import React from 'react';
-
 type Props = {
   onOpenCamera: () => void;
   onSkip: () => void;
 };
 
-const PhotoIntro: React.FC<Props> = ({ onOpenCamera, onSkip }) => {
+const PhotoIntro = ({ onOpenCamera, onSkip }: Props) => {
   return (
     <div className="photo-intro-screen">
       <div className="photo-intro-section">

@@ -1,4 +1,3 @@
-
 import { useRef, useState, useCallback, useEffect } from 'react';
 
 import Webcam from 'react-webcam';
@@ -107,10 +106,6 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
         {error && <div className="error-banner" role="alert">{error}</div>}
 
         <div className="camera-container">
-          {!cameraStarted && !snapshot && (
-            <div className="camera-placeholder"></div>
-          )}
-          
           {cameraStarted && !snapshot && (
             <div className="camera-frame">
               <Webcam

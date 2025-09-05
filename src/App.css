@@ -19,7 +19,7 @@
 
 /* Smooth theme overlay that crossfades background. We animate background-position + opacity for a more noticeable, 'magical' change. */
 .theme-overlay { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 1; background-size: cover; background-position: center center; background-repeat: no-repeat; transform: scale(1); transition: opacity 900ms ease-in-out, background-position 900ms ease-in-out, transform 900ms cubic-bezier(.2,.8,.2,1); backdrop-filter: blur(8px) saturate(1.02); }
-html[data-theme="light"] .theme-overlay { opacity: 1; background-image: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(14,204,126,0.15), rgba(83,192,210,0.25)); background-position: 30% 20%; transform: scale(1.02); }
+html[data-theme="light"] .theme-overlay { opacity: 1; background-image: url('https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2Fe8584510227541819a028312c35c266b?format=webp&width=800'), linear-gradient(180deg, rgba(255,255,255,0.95), rgba(14,204,126,0.15), rgba(83,192,210,0.25)); background-position: 30% 20%; transform: scale(1.02); }
 html[data-theme="dark"] .theme-overlay { opacity: 1; background-image: linear-gradient(180deg, rgba(10,16,22,0.6), rgba(18,30,38,0.6)); background-position: 70% 80%; transform: scale(1); }
 
 
@@ -451,21 +451,69 @@ html[data-theme="dark"] .secondary-button { background: rgba(255,255,255,0.06); 
 /* Stepper Styles */
 .stepper-container {
   position: fixed;
-  top: var(--header-height);
+  top: calc(var(--header-height)); /* sit directly below header */
   left: 0;
   right: 0;
-  height: 64px;
-  background: rgba(249, 249, 249, 0.95);
-  backdrop-filter: blur(8px);
+  height: 56px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 12px 20px;
-  z-index: 12;
+  padding: 8px 20px;
+  z-index: 9999; /* ensure it is above header */
 
   box-sizing: border-box;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Remove duplicate stepper styles - they are defined below */
+
+/* Make sure the stepper does not overlap content: push content down slightly */
+.question-content { padding: calc(var(--header-height) + 56px + 28px) 24px 40px; }
+
+/* Remove shadows and gradients from question options across themes */
+.question-option,
+.option-card,
+.question-option:hover,
+.option-card:hover {
+  box-shadow: none !important;
+}
+
+/* Remove gradient in dark theme and use subtle border for selected option */
+html[data-theme="dark"] .question-option.selected {
+  background-image: none !important;
+  background: transparent !important;
+  border: 2px solid rgba(14,204,126,0.12) !important;
+}
+
+/* Ensure selected state does not add gradient anywhere */
+.question-option.selected {
+  background-image: none !important;
+}
+
+/* Make option icons show without circular wrap */
+.option-icon-wrap { background: transparent !important; border-radius: 0 !important; padding: 0 !important; }
+
+/* Slider responsiveness: ensure track fits tablet and smaller screens */
+.linear-slider-container {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 24px 32px 24px; /* add horizontal padding to avoid edges */
+}
+.linear-slider-track-container { width: 100%; max-width: 100%; box-sizing: border-box; }
+.linear-slider-track-white, .linear-slider-track-bg, .linear-slider-track-filled { left: 0; right: 0; width: 100%; }
+
+@media (max-width: 900px) {
+  .linear-slider-container { padding: 0 20px 24px 20px; }
+  .linear-slider-track-container { max-width: 100%; width: 100%; }
+  .linear-slider-thumb { width: clamp(32px, 8vw, 42px); height: clamp(32px, 8vw, 42px); }
+}
+
+@media (max-width: 480px) {
+  .linear-slider-container { padding: 0 16px 24px 16px; }
+  .linear-slider-track-container { height: 56px; }
 }
 
 
@@ -480,6 +528,7 @@ html[data-theme="dark"] .secondary-button { background: rgba(255,255,255,0.06); 
   overflow: hidden;
   margin-right: 16px;
   min-width: 0; /* allow flex children to shrink on narrow screens */
+  height: 8px; /* make it taller and visible */
 }
 
 /* ensure the visual bar takes full width inside the container */
@@ -487,13 +536,13 @@ html[data-theme="dark"] .secondary-button { background: rgba(255,255,255,0.06); 
 
 .stepper-step {
   flex: 1;
-  height: 4px;
+  height: 100%;
   background: #E0E0E0;
   transition: background 300ms ease;
 }
 
 .stepper-step.completed {
-  background: linear-gradient(90deg, var(--primary-main) 0%, var(--secondary-main) 100%);
+  background: linear-gradient(90deg, var(--primary-main) 0%, var(--secondary-main) 100%) !important;
 }
 
 .stepper-close {
@@ -1595,6 +1644,75 @@ html[data-theme="dark"] .camera-frame {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+  display: none; /* hidden by default */
+}
+
+/* Show decorative shapes only in dark theme */
+html[data-theme="dark"] .result-decoratives {
+  display: block;
+}
+
+/* Debug toggle and panel */
+.result-debug-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.result-debug-panel {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  width: 320px;
+  max-height: 60vh;
+  overflow: auto;
+  background: rgba(255,255,255,0.96);
+  color: #111;
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 9998;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  font-size: 12px;
+}
+
+/* Dark theme variant for debug panel */
+html[data-theme="dark"] .result-debug-panel {
+  background: rgba(8,12,16,0.92);
+  color: #fff;
+}
+
+/* Remove box-shadow from option cards / radio options */
+.question-option,
+.option-card {
+  box-shadow: none !important;
+}
+
+/* Keep selected state but without shadow */
+.question-option.selected,
+.option-card.selected {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: none !important;
+}
+
+/* Solid background behind icons when buttons are selected to improve visibility */
+.nav-button.selected img,
+.result-button.selected img {
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+html[data-theme="dark"] .nav-button.selected img,
+html[data-theme="dark"] .result-button.selected img {
+  background: rgba(255,255,255,0.06);
 }
 
 .result-shape {
@@ -1911,18 +2029,11 @@ html[data-theme="dark"] .debug-info {
 /* Icon sizing: standardize to 40x40 and ensure they don't overflow buttons */
 .option-icon,
 .nav-button img,
-  .nav-button svg,
-  .result-button svg,
-  .hero-button svg,
-  .stepper-close svg,
-  .action-icon {
-
 .nav-button svg,
 .result-button svg,
 .hero-button svg,
 .stepper-close svg,
 .action-icon {
-
   width: 40px;
   height: 40px;
   flex-shrink: 0;
@@ -1945,6 +2056,31 @@ html[data-theme="dark"] .debug-info {
 /* Dark theme: preserve icon colors but ensure good contrast for button icons */
 html[data-theme="dark"] .result-button img.result-button-icon {
   filter: none; /* keep original icon colors */
+}
+
+/* Ensure button icons remain visible in all states */
+.result-button img.result-button-icon,
+.nav-button img,
+.hero-button img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Ensure SVG icons in buttons remain visible */
+.result-button svg,
+.nav-button svg,
+.hero-button svg,
+.stepper-close svg {
+  opacity: 1 !important;
+}
+
+/* For selected button states, ensure icons remain visible */
+.result-button.selected img,
+.nav-button.selected img,
+.result-button.selected svg,
+.nav-button.selected svg {
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 /* For option icons in dark theme - subtle glow for better visibility */
@@ -1974,15 +2110,20 @@ html[data-theme="dark"] .nav-button svg {
   filter: drop-shadow(0 2px 6px rgba(255,255,255,0.08));
 }
 
-/* Make inline SVGs follow button color for better theming */
+/* Make inline SVGs follow button color for better theming, but preserve icon visibility */
 .nav-button svg path,
 .nav-button svg circle,
 .nav-button svg rect,
 .result-button svg path,
 .result-button svg circle,
 .result-button svg rect {
-  stroke: currentColor;
-  fill: currentColor;
+  /* Only apply currentColor to non-icon SVGs */
+}
+
+/* Stepper close icon should remain dark/visible */
+.stepper-close svg path {
+  fill: #666;
+  stroke: #666;
 }
 
 /* Button color states */
@@ -2038,40 +2179,30 @@ html[data-theme="dark"] .result-button.secondary {
 
 /* Keep mobile stacking at <= 480px as column (existing rules apply) */
 
-/* Option icon wrapper for consistent circular backgrounds */
+/* Option icon wrapper: remove circular container to show icons clearly */
 .option-icon-wrap {
-  width: 56px;
-  height: 56px;
-  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: auto;
+  height: auto;
+  border-radius: 0;
   background: transparent;
+  padding: 0;
 }
 
-/* When option is selected, use subtle background with border instead of gradient */
-.question-option.selected .option-icon-wrap {
-  background: rgba(14, 204, 126, 0.1);
-  border: 2px solid var(--primary-main);
-  box-shadow: 0 4px 12px rgba(14, 204, 126, 0.2);
+/* When option is selected, do not use gradient backgrounds on the option card; use subtle border only */
+.question-option.selected {
+  background: transparent;
+  border: 2px solid rgba(14,204,126,0.12);
 }
 
-/* Ensure selected icons remain visible and prominent */
+/* Ensure selected icons remain visible and slightly larger but without background */
 .question-option.selected .option-icon {
   filter: none;
   opacity: 1;
   transform: scale(1.05);
   transition: transform 200ms ease, filter 200ms ease;
-/* When option is selected, highlight the icon background and ensure icon remains visible */
-.question-option.selected .option-icon-wrap {
-  background: linear-gradient(90deg, var(--primary-main), var(--secondary-main));
-}
-
-/* Ensure selected icons remain visible (don't invert raster images which can disappear) */
-.question-option.selected .option-icon {
-  filter: none;
-  opacity: 1;
-  transform: scale(1.02);
 }
 
 /* Dial linear control styles */
@@ -2110,7 +2241,7 @@ html[data-theme="dark"] .result-button.secondary {
   margin-bottom: 8px;
 }
 
-/* Linear Slider Styles (replaces dial) */
+/* Linear Slider Styles based on Figma design */
 .linear-slider-container {
   display: flex;
   flex-direction: column;
@@ -2118,7 +2249,7 @@ html[data-theme="dark"] .result-button.secondary {
   gap: 24px;
   width: 100%;
   max-width: 673px;
-  padding: 0 29px 32px 29px;
+  padding: 0 28px 32px 28px;
   margin: 0 auto;
 }
 
@@ -2130,16 +2261,16 @@ html[data-theme="dark"] .result-button.secondary {
 }
 
 .linear-slider-percentage {
-  min-width: 72px;
-  padding: 6px 10px;
+  min-width: 66px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Red Hat Display', -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 56px;
+  font-size: 44px;
   font-weight: 700;
-  line-height: 1;
-  background: linear-gradient(90deg, var(--primary-main), var(--secondary-main));
+  line-height: 36px;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2171,40 +2302,38 @@ html[data-theme="dark"] .result-button.secondary {
   position: relative;
   width: 100%;
   max-width: 616px;
-  height: 64px; /* increased to comfortably fit larger thumb */
+  height: 50px;
+  aspect-ratio: 49/4;
 }
 
 .linear-slider-track-bg {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 22px;
   width: 100%;
-  height: 8px;
-  opacity: 0.12;
-  background: linear-gradient(90deg, var(--primary-main), var(--secondary-main));
+  height: 7px;
+  opacity: 0.1;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
   filter: blur(10px);
 }
 
 .linear-slider-track-white {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 21px;
   width: 100%;
-  height: 10px;
+  height: 8px;
   border-radius: 6px;
-  background: #fff;
+  background: #FFF;
 }
 
 .linear-slider-track-filled {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 8px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--primary-main), var(--secondary-main));
+  top: 22px;
+  height: 7px;
+  border-radius: 3.5px;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
   transition: width 200ms ease;
 }
 
@@ -2212,13 +2341,14 @@ html[data-theme="dark"] .result-button.secondary {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #F9F9F9;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10.77px 21.55px rgba(0, 0, 0, 0.1), 0 0.9px 7.18px rgba(0, 0, 0, 0.1);
   transition: left 160ms ease, transform 160ms ease;
   pointer-events: none;
+  z-index: 2;
 }
 
 .linear-slider-input {
@@ -2226,11 +2356,12 @@ html[data-theme="dark"] .result-button.secondary {
   top: 0;
   left: 0;
   width: 100%;
-  height: 64px;
+  height: 50px;
   opacity: 0;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
+  z-index: 3;
 }
 
 .linear-slider-labels {

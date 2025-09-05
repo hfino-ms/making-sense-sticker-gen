@@ -1,6 +1,4 @@
-
 import { useState } from 'react';
-
 import type { FC } from 'react';
 import type { GenerationResult } from '../types';
 
@@ -13,7 +11,8 @@ type Props = {
 };
 
 const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint }) => {
-  const { archetype, imageUrl, prompt, source, providerError } = result;
+  const { archetype, imageUrl, prompt, source, providerError } = result as any;
+  const [showDebug, setShowDebug] = useState(false);
 
   const printSticker = () => {
     const w = window.open('', '_blank');
@@ -90,16 +89,21 @@ const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint
 
   return (
     <div className="result-screen">
-      {/* Decorative background elements */}
-      <div className="result-decoratives">
-        <div className="result-shape result-shape-1"></div>
-        <div className="result-shape result-shape-2"></div>
-        <div className="result-shape result-shape-3"></div>
-      </div>
+      <button className="result-debug-toggle" onClick={() => setShowDebug(s => !s)}>{showDebug ? 'Hide debug' : 'Show debug'}</button>
+      {showDebug && (
+        <div className="result-debug-panel" role="status" aria-live="polite">
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>Provider: {source || 'n/a'}</div>
+          {providerError && <div style={{ color: '#b00', marginBottom: 6 }}><strong>Provider error:</strong> {providerError}</div>}
+          <div style={{ fontSize: 12, color: '#444' }}>
+            <strong>Prompt:</strong>
+            <pre style={{ marginTop: 6, whiteSpace: 'pre-wrap', fontSize: 12 }}>{prompt || ''}</pre>
+          </div>
+        </div>
+      )}
 
       <div className="result-section">
-        <h1 className="result-title">You are {archetype.name}!</h1>
-        
+        <h1 className="result-title">{userName ? `${userName}, you are a ${archetype.name}!` : `You are ${archetype.name}!`}</h1>
+
         <div className="result-divider">
           <div className="divider-line"></div>
           <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
@@ -143,21 +147,6 @@ const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint
         </div>
       </div>
 
-      {/* Debug info: show OpenAI/provider status and prompt */}
-      {(providerError || source) && (
-        <div className="result-debug" role="status" aria-live="polite">
-          <div className="debug-info">
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Provider status: {source}</div>
-            {providerError && (
-              <div style={{ color: '#b00', marginBottom: 6 }}><strong>Provider error:</strong> {providerError}</div>
-            )}
-            <div style={{ fontSize: 12, color: '#444' }}>
-              <strong>Prompt:</strong>
-              <div style={{ marginTop: 4, whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{prompt}</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

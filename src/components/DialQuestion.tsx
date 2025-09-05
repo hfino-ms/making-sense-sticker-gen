@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 type Props = {
   value: number;
   onChange: (value: number) => void;
 };
 
-const DialQuestion: React.FC<Props> = ({ value, onChange }) => {
+const DialQuestion = ({ value, onChange }: Props) => {
   const [localValue, setLocalValue] = useState(value);
 
   useEffect(() => {

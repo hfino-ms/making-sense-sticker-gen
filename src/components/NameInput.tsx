@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 
 type Props = {
   onContinue: (name: string) => void;
 };
 
-const NameInput: React.FC<Props> = ({ onContinue }) => {
+const NameInput = ({ onContinue }: Props) => {
   const [name, setName] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
       onContinue(name.trim());

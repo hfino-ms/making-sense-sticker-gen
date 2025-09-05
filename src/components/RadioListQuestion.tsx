@@ -1,4 +1,3 @@
-import React from 'react';
 import type { QuestionOption } from '../types';
 
 type Props = {
@@ -7,7 +6,7 @@ type Props = {
   onSelect: (optionId: string) => void;
 };
 
-const RadioListQuestion: React.FC<Props> = ({ options, selectedId, onSelect }) => {
+const RadioListQuestion = ({ options, selectedId, onSelect }: Props) => {
   return (
     <div className="radio-list-container">
       {options.map((option) => (

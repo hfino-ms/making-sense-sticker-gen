@@ -1,8 +1,6 @@
-import React from 'react';
-
 type Props = { onStart: () => void };
 
-const SplashScreen: React.FC<Props> = ({ onStart }) => {
+const SplashScreen = ({ onStart }: Props) => {
   return (
     <div className="welcome-screen">
       <div className="hero-section">

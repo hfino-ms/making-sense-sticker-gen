@@ -5,7 +5,6 @@ import NameInput from './components/NameInput';
 import QuestionScreen from './components/QuestionScreen';
 import EmailCapture from './components/EmailCapture';
 import PhotoCapture from './components/PhotoCapture';
-import PromptPreview from './components/PromptPreview';
 import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
 import ThankYouScreen from './components/ThankYouScreen';
@@ -41,10 +40,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
 
-  const [pendingSelfie, setPendingSelfie] = useState<string | undefined>(undefined);
-  const [generatedPrompt, setGeneratedPrompt] = useState<string | undefined>(undefined);
   const [generatedArchetype, setGeneratedArchetype] = useState<any | null>(null);
-  const [promptLoading, setPromptLoading] = useState(false);
 
   const currentQuestion = QUESTIONS[questionIndex];
   const total = QUESTIONS.length;
@@ -104,15 +100,9 @@ function App() {
     setStep(STEPS.Photo);
   };
 
-  const handleEmailSkip = () => {
-    setStep(STEPS.Photo);
-  };
 
-
-  // Prepare prompt using LLM (or fallback) and go to PromptPreview
+  // Prepare prompt using LLM (or fallback) and generate immediately (skip prompt preview)
   const preparePrompt = async (maybeSelfie?: string) => {
-    setPendingSelfie(maybeSelfie);
-    setPromptLoading(true);
     setError(null);
     try {
       if (!navigator.onLine) throw new Error('No internet connection. Please connect to continue.');
@@ -122,42 +112,32 @@ function App() {
       const variantToken = 'v' + Math.floor(Math.random() * 10000);
       const localPrompt = buildPromptFromAnswers(fallbackArche, answers, variantToken);
       setGeneratedArchetype(fallbackArche);
-      setGeneratedPrompt(localPrompt);
 
       // Then ask LLM to refine/creative prompt; if LLM returns, use it, otherwise keep localPrompt
+      let finalPrompt = localPrompt;
       try {
         const llm = await import('./services/llmService');
         const out = await llm.generateArchetypeWithLLM(answers, variantToken);
         // if the LLM produced a different prompt use it, otherwise keep local
         if (out?.prompt && out.prompt.trim().length > 0 && out.prompt.trim() !== localPrompt.trim()) {
+          finalPrompt = out.prompt;
           setGeneratedArchetype(out.archetype);
-          setGeneratedPrompt(out.prompt);
         }
       } catch (llmErr) {
         // keep local prompt
       }
 
-      setStep(STEPS.PromptPreview);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to prepare prompt');
-    } finally {
-      setPromptLoading(false);
-    }
-  };
-
-  const startGeneration = async () => {
-    setStep(STEPS.Generating);
-    setError(null);
-    try {
-      if (!navigator.onLine) throw new Error('No internet connection. Please connect to continue.');
-      const promptToUse = generatedPrompt;
-      const arche = generatedArchetype ?? deriveArchetype(answers);
-      const res = await generateSticker(arche, pendingSelfie, promptToUse);
+      // Skip PromptPreview and start generation immediately
+      setStep(STEPS.Generating);
+      const promptToUse = finalPrompt;
+      const arche = generatedArchetype ?? fallbackArche;
+      const res = await generateSticker(arche, maybeSelfie, promptToUse);
       setResult(res);
       setStep(STEPS.Result);
     } catch (e: any) {
-      setError(e?.message || 'Something went wrong. Please try again.');
-      setStep(STEPS.PromptPreview);
+      setError(e?.message || 'Failed to prepare or generate sticker');
+      setStep(STEPS.Splash);
+    } finally {
     }
   };
 
@@ -202,39 +182,16 @@ function App() {
         />
       )}
       {step === STEPS.EmailCapture && (
-        <EmailCapture onSubmit={handleEmailSubmit} onSkip={handleEmailSkip} />
+        <EmailCapture onSubmit={handleEmailSubmit} />
       )}
       {step === STEPS.Photo && (
         <PhotoCapture onConfirm={(dataUrl?: string) => preparePrompt(dataUrl)} onSkip={() => preparePrompt(undefined)} />
       )}
 
-      {step === STEPS.PromptPreview && generatedPrompt && generatedArchetype && (
-        <PromptPreview
-          archetype={generatedArchetype}
-          prompt={generatedPrompt}
-          onChange={(p) => setGeneratedPrompt(p)}
-          onGenerate={startGeneration}
-          onRegenerate={async () => {
-            setPromptLoading(true);
-            try {
-              const llm = await import('./services/llmService');
-              const variant = 'v' + Math.floor(Math.random() * 10000);
-              const out = await llm.generateArchetypeWithLLM(answers, variant);
-              setGeneratedArchetype(out.archetype);
-              setGeneratedPrompt(out.prompt);
-            } catch (e: any) {
-              setError('Regenerate failed');
-            } finally {
-              setPromptLoading(false);
-            }
-          }}
-          loading={promptLoading}
-        />
-      )}
 
       {step === STEPS.Generating && <LoadingScreen />}
       {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} onShare={goToThankYou} onPrint={goToThankYou} />}
-      {step === STEPS.ThankYou && <ThankYouScreen userName={userName} onRestart={restart} />}
+      {step === STEPS.ThankYou && <ThankYouScreen onRestart={restart} />}
       <footer className="app-footer">Making Sense - 2025. All rights reserved.</footer>
     </div>
   );

@@ -1,12 +1,10 @@
-import React from 'react';
-
 type Props = {
   currentStep: number;
   totalSteps: number;
   onClose?: () => void;
 };
 
-const Stepper: React.FC<Props> = ({ currentStep, totalSteps, onClose }) => {
+const Stepper = ({ currentStep, totalSteps, onClose }: Props) => {
   return (
     <div className="stepper-container">
       <div className="stepper-progress">
