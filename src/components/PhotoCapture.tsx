@@ -1,4 +1,6 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+
+import { useRef, useState, useCallback, useEffect } from 'react';
+
 import Webcam from 'react-webcam';
 
 type Props = {
@@ -132,8 +134,9 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
         <div className="photo-capture-buttons">
           {!snapshot && !cameraStarted && (
             <>
-              <button className="nav-button secondary" onClick={onSkip}>CLOSE</button>
-              <button className="nav-button primary" onClick={startCamera}>TAKE PHOTO</button>
+              <button className="nav-button secondary outlined" onClick={onSkip}>SKIP</button>
+              <button className="nav-button primary" onClick={startCamera}>OPEN CAMERA</button>
+
             </>
           )}
           

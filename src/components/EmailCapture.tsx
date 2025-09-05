@@ -51,12 +51,19 @@ const EmailCapture: React.FC<Props> = ({ onSkip, onSubmit }) => {
             />
           </div>
           
+          <button
+            type="submit"
+            className="hero-button"
+          >
+            SUBMIT
+
           <button 
             type="button"
             className="hero-button"
             onClick={onSkip}
           >
             SKIP
+
           </button>
         </form>
       </div>
