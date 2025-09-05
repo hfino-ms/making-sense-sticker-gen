@@ -50,9 +50,23 @@ async function generateViaProxy(prompt: string, selfieDataUrl?: string): Promise
 
   const json = envelope.bodyJson ?? null;
   const text = envelope.bodyText ?? null;
+
+  // Check for base64 format first
   const b64 = json?.data?.[0]?.b64_json;
-  if (!b64) throw new Error(`Proxy returned no image data: ${String(text ?? '')}`);
-  return await b64ToObjectUrl(b64);
+  if (b64) {
+    console.log('🖼️ Got base64 image data');
+    return await b64ToObjectUrl(b64);
+  }
+
+  // Check for URL format
+  const url = json?.data?.[0]?.url;
+  if (url) {
+    console.log('🖼️ Got URL image data:', url);
+    return url;
+  }
+
+  console.error('❌ No image data found. JSON structure:', json);
+  throw new Error(`Proxy returned no image data. Response: ${String(text ?? '')}`);
 }
 
 // Generate sticker - accepts optional promptOverride from the LLM

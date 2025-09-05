@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import fetch from 'node-fetch';
 
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = process.env.SMTP_PORT;
@@ -9,6 +8,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER || 'no-reply@example.com'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  
   try {
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
       return res.status(500).json({ error: 'SMTP credentials not configured on server.' });
@@ -26,6 +26,7 @@ export default async function handler(req, res) {
 
     let attachment;
     if (imageUrl && imageUrl.startsWith('data:')) {
+      // Data URL
       const match = imageUrl.match(/^data:(.*);base64,(.*)$/);
       if (match) {
         const mime = match[1];
@@ -33,6 +34,7 @@ export default async function handler(req, res) {
         attachment = { filename: 'sticker.png', content: data, contentType: mime };
       }
     } else if (imageUrl) {
+      // External URL
       const resp = await fetch(imageUrl);
       const buf = await resp.arrayBuffer();
       const contentType = resp.headers.get('content-type') || 'image/png';
