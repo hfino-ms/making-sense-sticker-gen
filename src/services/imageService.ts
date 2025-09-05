@@ -17,14 +17,41 @@ async function generateViaProxy(prompt: string, selfieDataUrl?: string): Promise
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt, selfieDataUrl }),
   });
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`Proxy image generation error ${res.status} ${text}`);
+
+  // Server returns a JSON envelope with { status, ok, bodyText, bodyJson }
+  let envelope: any = null;
+  try {
+    envelope = await res.json();
+  } catch (e: any) {
+    // If response body was already read for some reason, try a fresh retry to the proxy once
+    const msg = String(e);
+    if (msg.includes('body already read') || msg.includes('Failed to execute \"json\" on \'Response\'')) {
+      // retry once
+      try {
+        const retryRes = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, selfieDataUrl }),
+          cache: 'no-store',
+        });
+        envelope = await retryRes.json();
+      } catch (retryErr) {
+        throw new Error(`Failed to parse proxy JSON response after retry: ${String(retryErr)}`);
+      }
+    } else {
+      throw new Error(`Failed to parse proxy JSON response: ${String(e)}`);
+    }
   }
-  let json: any;
-  try { json = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON from proxy'); }
+
+  if (!envelope.ok) {
+    // include status and bodyText for debugging
+    throw new Error(`Proxy image generation error ${String(envelope.status)} ${String(envelope.bodyText ?? '')}`);
+  }
+
+  const json = envelope.bodyJson ?? null;
+  const text = envelope.bodyText ?? null;
   const b64 = json?.data?.[0]?.b64_json;
-  if (!b64) throw new Error('Proxy returned no image data');
+  if (!b64) throw new Error(`Proxy returned no image data: ${String(text ?? '')}`);
   return await b64ToObjectUrl(b64);
 }
 

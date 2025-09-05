@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import Webcam from 'react-webcam';
 
 type Props = {
   onConfirm: (dataUrl?: string) => void;
@@ -6,103 +7,152 @@ type Props = {
 };
 
 export default function PhotoCapture({ onConfirm, onSkip }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const webcamRef = useRef<Webcam | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<string | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraStarted, setCameraStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const startCamera = async () => {
+  const videoConstraints: MediaTrackConstraints = {
+    width: { ideal: 640 },
+    height: { ideal: 640 },
+    facingMode: 'user',
+  };
+
+  useEffect(() => {
+    return () => {
+      setCameraStarted(false);
+    };
+  }, []);
+
+  const startCamera = useCallback(() => {
     setError(null);
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
-      setStream(s);
-      if (videoRef.current) {
-        videoRef.current.srcObject = s;
-        videoRef.current.playsInline = true;
-        // wait for metadata so videoWidth/Height are available
-        await new Promise<void>((resolve) => {
-          const v = videoRef.current!;
-          const onLoaded = () => { v.removeEventListener('loadedmetadata', onLoaded); resolve(); };
-          v.addEventListener('loadedmetadata', onLoaded);
-          v.play().catch(() => {/* ignore play error */});
-        });
-      }
-      setCameraStarted(true);
-    } catch (e) {
-      setError('Camera access denied or unavailable. Please allow camera access.');
-    }
-  };
+    setCameraStarted(true);
+  }, []);
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      setStream(null);
-    }
+  const stopCamera = useCallback(() => {
     setCameraStarted(false);
-  };
+  }, []);
 
-  const takePhoto = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    const vw = video.videoWidth || 640;
-    const vh = video.videoHeight || 480;
-    const size = Math.min(vw, vh);
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    // center crop
-    const sx = Math.max(0, (vw - size) / 2);
-    const sy = Math.max(0, (vh - size) / 2);
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
-    const data = canvas.toDataURL('image/jpeg', 0.9);
-    setSnapshot(data);
-    // stop camera after capture to save resources
-    stopCamera();
-  };
+  // Capture a square centered crop from the underlying video element to avoid stretching
+  const takePhoto = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    try {
+      const videoEl: HTMLVideoElement | undefined = (webcamRef.current as any)?.video ?? undefined;
+      if (!videoEl) {
+        setError('Camera not available');
+        setLoading(false);
+        return;
+      }
+      const vw = videoEl.videoWidth || videoEl.clientWidth;
+      const vh = videoEl.videoHeight || videoEl.clientHeight;
+      const size = Math.min(vw, vh);
+      const sx = Math.max(0, (vw - size) / 2);
+      const sy = Math.max(0, (vh - size) / 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setError('Capture failed');
+        setLoading(false);
+        return;
+      }
+      ctx.drawImage(videoEl, sx, sy, size, size, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      setSnapshot(dataUrl);
+    } catch (e) {
+      setError('Capture failed');
+    } finally {
+      setLoading(false);
+      setCameraStarted(false);
+    }
+  }, []);
 
   const confirm = () => onConfirm(snapshot ?? undefined);
+  const retake = () => {
+    setSnapshot(null);
+    setError(null);
+    setCameraStarted(true);
+  };
 
   return (
-    <div className="screen-container">
-      <h2 className="question-title">Personalize your robot?</h2>
-      <p className="intro-copy">Optionally take a selfie to inspire the robot’s features.</p>
-
-      {error && <div className="error-banner">{error}</div>}
-
-      {!cameraStarted && !snapshot && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="primary-button" onClick={startCamera}>Allow camera</button>
-          <button className="ghost-button" onClick={onSkip}>Skip</button>
+    <div className="photo-capture-screen">
+      <div className="photo-capture-section">
+        <h1 className="photo-capture-title">
+          Go beyond and<br />
+          personalize your robot
+        </h1>
+        
+        <div className="photo-capture-divider">
+          <div className="divider-line"></div>
+          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
+            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
+            <defs>
+              <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#1EDD8E"/>
+                <stop offset="1" stopColor="#53C0D2"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
-      )}
+        
+        <p className="photo-capture-description">
+          Take a selfie to customize your robot's features to match your unique style.
+        </p>
+        
+        {error && <div className="error-banner" role="alert">{error}</div>}
 
-      {cameraStarted && !snapshot && (
-        <div className="camera-frame">
-          <video ref={videoRef} playsInline className="camera-video" />
-          <div className="camera-overlay" />
+        <div className="camera-container">
+          {!cameraStarted && !snapshot && (
+            <div className="camera-placeholder"></div>
+          )}
+          
+          {cameraStarted && !snapshot && (
+            <div className="camera-frame">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                mirrored
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+                className="camera-video"
+              />
+            </div>
+          )}
+
+          {snapshot && (
+            <div className="photo-preview">
+              <img src={snapshot} alt="Selfie preview" className="preview-image" />
+            </div>
+          )}
         </div>
-      )}
-
-      {snapshot && (
-        <div className="photo-preview">
-          <img src={snapshot} alt="Selfie preview" />
+        
+        <div className="photo-capture-buttons">
+          {!snapshot && !cameraStarted && (
+            <>
+              <button className="nav-button secondary" onClick={onSkip}>CLOSE</button>
+              <button className="nav-button primary" onClick={startCamera}>TAKE PHOTO</button>
+            </>
+          )}
+          
+          {cameraStarted && !snapshot && (
+            <>
+              <button className="nav-button secondary" onClick={stopCamera}>CLOSE</button>
+              <button className="nav-button primary" onClick={takePhoto} disabled={loading}>
+                {loading ? 'TAKING...' : 'TAKE PHOTO'}
+              </button>
+            </>
+          )}
+          
+          {snapshot && (
+            <>
+              <button className="nav-button secondary" onClick={retake}>RETAKE</button>
+              <button className="nav-button primary" onClick={confirm}>USE PHOTO</button>
+            </>
+          )}
         </div>
-      )}
-
-      <div className="actions-row">
-        {!snapshot && cameraStarted ? (
-          <button className="primary-button" onClick={takePhoto} disabled={!!error}>Take photo</button>
-        ) : snapshot ? (
-          <button className="secondary-button" onClick={() => { setSnapshot(null); startCamera(); }}>Retake</button>
-        ) : null}
-
-        {snapshot && <button className="ghost-button" onClick={onSkip}>Skip</button>}
-
-        <button className="primary-button" onClick={confirm}>Continue</button>
-
       </div>
     </div>
   );

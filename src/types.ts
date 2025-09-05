@@ -1,11 +1,14 @@
 export type QuestionOption = {
   id: string;
   label: string;
+  icon?: string;
+  value?: number; // for dial questions
 };
 
 export type Question = {
   id: string;
   title: string;
+  layout?: 'icons' | 'radio-list' | 'dial'; // layout type
   options: QuestionOption[];
 };
 

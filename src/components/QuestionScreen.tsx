@@ -1,62 +1,129 @@
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
 import type { Question } from '../types';
+import Stepper from './Stepper';
+import DialQuestion from './DialQuestion';
+import RadioListQuestion from './RadioListQuestion';
 
 type Props = {
   question: Question;
   selected?: { choice: string; intensity?: number };
   onSelect: (optionId: string, intensity?: number) => void;
   onNext: () => void;
+  onPrevious: () => void;
+  onClose: () => void;
   step: number;
   total: number;
 };
 
-const QuestionScreen: FC<Props> = ({ question, selected, onSelect, onNext, step, total }) => {
-  const [localIntensity, setLocalIntensity] = useState<number>(selected?.intensity ?? 5);
-
-  useEffect(() => {
-    setLocalIntensity(selected?.intensity ?? 5);
-  }, [selected]);
-
+const QuestionScreen: FC<Props> = ({
+  question,
+  selected,
+  onSelect,
+  onNext,
+  onPrevious,
+  onClose,
+  step,
+  total
+}) => {
   const handleOptionClick = (optId: string) => {
-    onSelect(optId, localIntensity);
+    onSelect(optId);
+  };
+
+  const handleDialChange = (value: number) => {
+    // For dial questions, we map the value to the appropriate option
+    let optionId = 'low';
+    if (value >= 75) optionId = 'high';
+    else if (value >= 25) optionId = 'medium';
+    onSelect(optionId, value);
+  };
+
+  const getDialValue = () => {
+    if (!selected?.choice) return 0;
+    const option = question.options.find(opt => opt.id === selected.choice);
+    return option?.value || 0;
+  };
+
+  const renderQuestionContent = () => {
+    const layout = question.layout || 'icons';
+
+    switch (layout) {
+      case 'dial':
+        return (
+          <DialQuestion
+            value={getDialValue()}
+            onChange={handleDialChange}
+          />
+        );
+
+      case 'radio-list':
+        return (
+          <RadioListQuestion
+            options={question.options}
+            selectedId={selected?.choice}
+            onSelect={(optId) => onSelect(optId)}
+          />
+        );
+
+      case 'icons':
+      default:
+        return (
+          <div className="question-options">
+            {question.options.map((option) => (
+              <button
+                key={option.id}
+                className={`question-option ${selected?.choice === option.id ? 'selected' : ''}`}
+                onClick={() => handleOptionClick(option.id)}
+              >
+                {option.icon && (
+                  <span className="option-icon-wrap">
+                    <img
+                      src={option.icon}
+                      alt={`${option.label} icon`}
+                      className="option-icon"
+                    />
+                  </span>
+                )}
+                <span className="option-label">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        );
+    }
   };
 
   return (
-    <div className="screen-container">
-      <div className="progress-indicator">Question {step} of {total}</div>
-      <h2 className="question-title">{question.title}</h2>
-      <div className="options-grid">
-        {question.options.map((opt) => (
-          <button
-            key={opt.id}
-            className={`option-card ${selected?.choice === opt.id ? 'selected' : ''}`}
-            onClick={() => handleOptionClick(opt.id)}
-          >
-            <span className="option-label">{opt.label}</span>
-          </button>
-        ))}
+    <div className="question-screen">
+      <Stepper 
+        currentStep={step} 
+        totalSteps={total} 
+        onClose={onClose}
+      />
+      
+      <div className="question-content">
+        <div className="question-section">
+          <h1 className="question-title">{question.title}</h1>
+          
+          {renderQuestionContent()}
+          
+          <div className="question-navigation">
+            <button 
+              className="nav-button secondary"
+              onClick={onPrevious}
+              disabled={step === 1}
+            >
+              PREVIOUS
+            </button>
+            
+            <button
+              className="nav-button primary"
+              onClick={onNext}
+              disabled={!selected}
+            >
+              {step === total ? 'FINISH' : 'NEXT'}
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-        <label style={{ fontSize: 13, color: 'var(--muted)' }}>Intensity: {localIntensity}</label>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={localIntensity}
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            setLocalIntensity(v);
-            if (selected?.choice) onSelect(selected.choice, v);
-          }}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      <button className="primary-button next-button" onClick={onNext} disabled={!selected}>
-        Next
-      </button>
     </div>
   );
 };
