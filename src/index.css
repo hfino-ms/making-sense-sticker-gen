@@ -32,19 +32,20 @@ html {
   transition: background 900ms ease-in-out, color 600ms ease-in-out;
 }
 
-/* Header overlay for better logo visibility in light theme */
+/* Header should match stepper background exactly */
 .app-header {
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
-  padding: 8px 12px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,251,250,0.88));
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+  transition: background 420ms ease, transform 360ms ease;
 }
 
 html[data-theme="dark"] .app-header {
-  background: linear-gradient(180deg, rgba(8,12,18,0.4), rgba(8,12,18,0.2));
+  background: linear-gradient(180deg, rgba(6,10,14,0.98), rgba(8,12,18,0.96));
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
 }
-
-.app-header { transition: background 420ms ease, transform 360ms ease; }
 
 
 :root {

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { FC } from 'react';
 import type { GenerationResult } from '../types';
 
@@ -10,29 +9,97 @@ type Props = {
   onPrint: () => void;
 };
 
-const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint }) => {
-  const { archetype, imageUrl, prompt, source, providerError } = result as any;
-  const [showDebug, setShowDebug] = useState(false);
+const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
+  const { archetype, imageUrl } = result as any;
+  // Prefer SVG frame asset for crisp rendering (use provided uploaded SVG if available)
+  const FRAME_URL = "https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F8822292feba8457299fe95b2e072c9f8?format=svg";
 
-  const printSticker = () => {
+  // Choose sticker source (prefer server-provided full image URL or data URL)
+  const stickerSource = (result as any)?.imageDataUrl || imageUrl;
+
+  // We will NOT pre-compose the image to avoid downsampling/pixelation. Instead, render the original sticker
+  // and overlay the frame via CSS. For share/print, compose on-demand at the sticker's natural resolution to include the frame.
+
+  // Helper: load image with crossOrigin and return HTMLImageElement
+  const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+    img.src = src;
+  });
+
+  // Helper: proxy frame to dataUrl to avoid CORS issues when composing
+  const proxyFrame = async () => {
+    try {
+      const proxyResp = await fetch('/api/proxy-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-source': 'ui' },
+        body: JSON.stringify({ url: FRAME_URL }),
+      });
+      if (proxyResp.ok) {
+        const pj = await proxyResp.json();
+        if (pj?.dataUrl) return pj.dataUrl;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return FRAME_URL;
+  };
+
+  // Compose sticker+frame at original sticker resolution for printing/sharing
+  const composeStickerWithFrame = async (): Promise<string> => {
+    if (!stickerSource) return '';
+    try {
+      const proxiedFrameSrc = await proxyFrame();
+      const [stickerImg, frameImg] = await Promise.all([loadImage(stickerSource), loadImage(proxiedFrameSrc)]);
+      const canvas = document.createElement('canvas');
+      const w = stickerImg.naturalWidth || stickerImg.width || 1024;
+      const h = stickerImg.naturalHeight || stickerImg.height || 1024;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('No canvas context');
+
+      // Draw sticker full-bleed
+      ctx.drawImage(stickerImg, 0, 0, w, h);
+      // Draw frame on top, scaled to cover canvas
+      ctx.drawImage(frameImg, 0, 0, w, h);
+
+      return canvas.toDataURL('image/png');
+    } catch (e) {
+      console.error('Failed to compose sticker for export', e);
+      return stickerSource;
+    }
+  };
+
+  const printSticker = async () => {
     const w = window.open('', '_blank');
     if (!w) {
-      onPrint(); // Navigate even if print fails
+      onPrint();
       return;
     }
+    let outSrc = stickerSource || FRAME_URL;
+    try {
+      outSrc = await composeStickerWithFrame();
+    } catch (e) {
+      outSrc = stickerSource || FRAME_URL;
+    }
+
     w.document.write(`<html><head><title>${archetype.name} Sticker</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff;">
-      <img src="${imageUrl}" style="width:80vmin;height:80vmin;object-fit:contain;"/>
+      <img src="${outSrc}" style="max-width:90vw;max-height:90vh;object-fit:contain;"/>
       <script>window.onload=function(){setTimeout(function(){window.print();}, 300)}<\/script>
     </body></html>`);
     w.document.close();
-    // Navigate to thank you after a short delay to allow print dialog
     setTimeout(() => onPrint(), 1000);
   };
 
   const shareSticker = async () => {
     const fileName = `${archetype.name.replace(/\s+/g, '-')}-sticker.png`;
     try {
-      const blob = await (await fetch(imageUrl)).blob();
+      const composedDataUrl = await composeStickerWithFrame();
+      const res = await fetch(composedDataUrl);
+      const blob = await res.blob();
       if (navigator.share && (navigator as any).canShare?.({ files: [new File([blob], fileName, { type: blob.type })] })) {
         await navigator.share({
           title: `${archetype.name} Sticker`,
@@ -46,60 +113,24 @@ const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint
         a.click();
         URL.revokeObjectURL(a.href);
       }
-    } catch {
-      // no-op
-    } finally {
-      // Navigate to thank you after share attempt (success or failure)
-      setTimeout(() => onShare(), 500);
-    }
-  };
-
-  const emailState = (userEmail as string) || '';
-
-  const [sending, setSending] = useState(false);
-  const [sendSuccess, setSendSuccess] = useState<boolean | null>(null);
-
-  const sendByEmail = async () => {
-    if (!emailState || !/[^@\s]+@[^@\s]+\.[^@\s]+/.test(emailState)) {
-      setSendSuccess(false);
-      return;
-    }
-    setSending(true);
-    setSendSuccess(null);
-    try {
-      const resp = await fetch('/api/send-sticker-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: emailState,
-          subject: `${archetype.name} Sticker for ${userName || 'you'}`,
-          text: archetype.valueLine,
-          imageUrl,
-        }),
-      });
-      const json = await resp.json();
-      if (json && json.success) setSendSuccess(true);
-      else setSendSuccess(false);
     } catch (e) {
-      setSendSuccess(false);
+      console.error('Share failed, falling back to raw sticker', e);
+      try {
+        const res = await fetch(stickerSource);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch {}
     } finally {
-      setSending(false);
+      setTimeout(() => onShare(), 500);
     }
   };
 
   return (
     <div className="result-screen">
-      <button className="result-debug-toggle" onClick={() => setShowDebug(s => !s)}>{showDebug ? 'Hide debug' : 'Show debug'}</button>
-      {showDebug && (
-        <div className="result-debug-panel" role="status" aria-live="polite">
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Provider: {source || 'n/a'}</div>
-          {providerError && <div style={{ color: '#b00', marginBottom: 6 }}><strong>Provider error:</strong> {providerError}</div>}
-          <div style={{ fontSize: 12, color: '#444' }}>
-            <strong>Prompt:</strong>
-            <pre style={{ marginTop: 6, whiteSpace: 'pre-wrap', fontSize: 12 }}>{prompt || ''}</pre>
-          </div>
-        </div>
-      )}
 
       <div className="result-section">
         <h1 className="result-title">{userName ? `${userName}, you are a ${archetype.name}!` : `You are ${archetype.name}!`}</h1>
@@ -116,34 +147,34 @@ const ResultScreen: FC<Props> = ({ result, userName, userEmail, onShare, onPrint
             </defs>
           </svg>
         </div>
-        
+
         <div className="result-description">
           <p className="result-line-1">{archetype.descriptor}</p>
           <p className="result-line-2">{archetype.valueLine}</p>
         </div>
-        
-        <div className="result-image-container">
-          <img src={imageUrl} alt={`${archetype.name} sticker`} className="result-image" />
+
+        {/* Archetype label layer (text) */}
+        <div className="archetype-label">{archetype?.name}</div>
+
+        {/* Sticker displayed as provided by the generator (no pre-composition to avoid pixelation). Frame is overlaid on top. */}
+        <div className="sticker-raw-container">
+          <img src={stickerSource || FRAME_URL} alt="Sticker" className="sticker-raw-img" />
+          <img src={FRAME_URL} alt="Frame overlay" className="sticker-frame-overlay" />
         </div>
-        
+
         <div className="result-buttons">
           <button className="result-button secondary" onClick={shareSticker}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2Fb2c3e6f19434464292c37a48e9e419e9?format=webp&width=800" alt="Share" className="result-button-icon" />
+            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F46582c5b707c47f389cf1daf4acaea9d?format=svg" alt="Share" className="result-button-icon" />
             SHARE
           </button>
 
           <button className="result-button primary" onClick={printSticker}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F4c9c25e7ce8049fab890b8f854c5e28e?format=webp&width=800" alt="Print" className="result-button-icon" />
+            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F1146f9e4771b4cff95e916ed9381032d?format=svg" alt="Print" className="result-button-icon" />
             PRINT
           </button>
         </div>
 
         <div className="result-email">
-          <button className="result-button tertiary" onClick={sendByEmail} disabled={sending || !emailState} title={emailState ? `Send to ${emailState}` : 'No email available'}>
-            {sending ? 'SENDING…' : `EMAIL TO ${emailState ? emailState : '...'}`}
-          </button>
-          {sendSuccess === true && <div className="email-success">Sent to {emailState}</div>}
-          {sendSuccess === false && <div className="email-error">Failed to send</div>}
         </div>
       </div>
 

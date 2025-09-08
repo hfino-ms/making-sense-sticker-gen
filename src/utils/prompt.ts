@@ -1,11 +1,11 @@
-import type { Archetype } from '../types';
 import { QUESTIONS } from '../data/questions';
-import type { Answers } from '../types';
+import type { Answers, Archetype } from '../types';
 
 export function buildPrompt(archetype: Archetype, includeSelfie: boolean): string {
-  const base = `A high-quality, circular sticker design in a ${archetype.colorPalette} theme. The background should be ${archetype.backgroundStyle}. The central subject is a robot character of type ${archetype.robotType}, with a ${archetype.robotPose}. The style is futuristic and human-centered. Text on the sticker: '${archetype.name}'.`;
+  // Core prompt for gpt-image-1 generation: 2x2 inch sticker, no text, photorealistic/illustrative guidance
+  const base = `Create a high-quality 2x2 inch sticker image (square) suitable for printing. The composition should be centered and fill the canvas. Use the following visual guidance: color palette - ${archetype.colorPalette}; background style - ${archetype.backgroundStyle}; subject - a ${archetype.robotType} in a ${archetype.robotPose}. Avoid any textual elements, labels, or logos in the image. Produce a single, clean image with no borders or rounded masks.`;
   const selfie = includeSelfie
-    ? " The robot has personal features from the user's selfie, like glasses or a hairstyle, subtly integrated in a respectful way."
+    ? " If a selfie is provided, subtly integrate the person's facial features into the design (e.g., hairstyle or glasses) while keeping the overall sticker aesthetic and respecting likeness."
     : '';
   return base + selfie;
 }
@@ -23,9 +23,37 @@ export function buildPromptFromAnswers(archetype: Archetype, answers: Answers, v
     }
   }
 
-  const vibe = variant ? `StyleToken:${variant};` : '';
+  const inspiration = `Background / Color palette: ${archetype.colorPalette}. Background style: ${archetype.backgroundStyle}. Robot type: ${archetype.robotType}. Robot pose: ${archetype.robotPose}. Tone: ${archetype.descriptor} ${archetype.valueLine}`;
 
-  // Less prescriptive prompt: ask for a creative, original sticker inspired by archetype + answers.
-  const prompt = `Create an original, unique circular sticker that embodies the archetype "${archetype.name}". ${vibe}Draw inspiration from the following traits: ${lines.join('; ')}. Produce a high-quality, visually engaging sticker concept — be creative with composition, colors, and character details. Include the archetype name subtly as part of the design.`;
+  // Build detailed prompt following the requested template, but do NOT include the archetype name literally and avoid textual elements in the image.
+  let prompt = `Create a high-quality image of a futuristic robot sized 2x2 inches showcasing the following characteristics. Use the archetype traits as inspiration but do not mention the archetype name in the image or include any text in the design.
+
+Primary description:
+- A ${archetype.robotType} in a ${archetype.robotPose}.
+- Visual texture and detail: metallic surfaces with ${archetype.backgroundStyle}, ${archetype.colorPalette} color accents.
+
+Stylistic guidance and inspiration:
+${inspiration}
+
+Traits derived from responses: ${lines.join('; ')}.
+
+Robot type / pose guidance:
+- Visionary: looking ahead, viewfinder, connecting lines.
+- Strategist: with gears, planning board.
+- Innovator: gadgets and sparks of energy.
+- Connector: antennas and subtle network icons.
+- Trailblazer: holding a beacon or illuminating a path.
+
+Texture and detail guidance:
+- Metallic / smooth; sparks or glowing elements for energetic variants; network lines for connector-like variants.
+
+Additional constraints:
+- No text should appear anywhere in the image.
+- Do not include or print the archetype name or any label.
+- Focus on a clean composition suitable for a circular sticker.
+
+Output: produce a single, high-quality image suitable for a 2x2 inch sticker.`;
+
+  if (variant) prompt += ` VariantToken:${variant}`;
   return prompt;
 }

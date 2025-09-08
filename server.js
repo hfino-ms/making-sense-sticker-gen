@@ -1,102 +1,105 @@
 import express from 'express';
 import path from 'path';
-import nodemailer from 'nodemailer';
+import fs from 'fs';
 import OpenAI, { toFile } from 'openai';
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '30mb' }));
 
-const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION;
-const openai = new OpenAI({
-  apiKey: OPENAI_KEY,
-});
+// Support multiple possible environment variable names for OpenAI key (helps on different hosting setups)
+const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VERCEL_OPENAI_API_KEY || process.env.OPENAI_API_KEY_SERVER || null;
+if (!OPENAI_KEY) {
+  console.warn('Warning: OPENAI key not found in environment variables. Image generation will fail without a valid key. Checked vars: OPENAI_API_KEY, VITE_API_KEY_IMAGE_GENERATION, NEXT_PUBLIC_OPENAI_API_KEY, VERCEL_OPENAI_API_KEY, OPENAI_API_KEY_SERVER');
+}
+const openai = new OpenAI({ apiKey: OPENAI_KEY });
 
-// Email transporter configuration expects SMTP_* env vars
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = process.env.SMTP_PORT;
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER || 'no-reply@example.com';
+
+
 
 app.post('/api/generate-image', async (req, res) => {
   try {
-    console.log('🔑 OPENAI_KEY present:', !!OPENAI_KEY);
-    console.log('🔑 OPENAI_KEY first 10 chars:', OPENAI_KEY?.substring(0, 10));
-    
+    // Only accept generation requests from the UI to avoid accidental CLI usage and credit consumption
+    // Client must include header: 'x-source': 'ui'
+    if ((req.headers['x-source'] || req.headers['x-source'] === '') && String(req.headers['x-source']) !== 'ui') {
+      return res.status(403).json({ error: 'Image generation only allowed from UI' });
+    }
+
     if (!OPENAI_KEY) return res.status(500).json({ error: 'Server missing OPENAI key' });
-    
-    const { prompt, selfieDataUrl } = req.body || {};
-    console.log('📝 Prompt received:', prompt?.substring(0, 100) + '...');
-    console.log('📸 Selfie provided:', !!selfieDataUrl);
-    
+
+    const { prompt, selfieDataUrl, photoStep } = req.body || {};
     if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
 
     try {
       let result;
-      
-      if (selfieDataUrl) {
-        // Use real image with images.edit()
-        console.log('🚀 Using real image with OpenAI images.edit()...');
-        
-        // Convert data URL to buffer
+
+      // Decide whether user skipped photo or provided one
+      const skipped = (typeof photoStep === 'string' && photoStep === 'skipped') || !selfieDataUrl;
+
+      if (!skipped && selfieDataUrl) {
+        // Use real image with OpenAI images.edits via REST
+        console.log('🚀 Using real image with OpenAI images.edits (REST)...');
+
         const match = selfieDataUrl.match(/^data:(.*);base64,(.*)$/);
         if (!match) {
           return res.status(400).json({ error: 'Invalid selfie data URL format' });
         }
-        
         const mimeType = match[1];
         const base64Data = match[2];
         const imageBuffer = Buffer.from(base64Data, 'base64');
-        
-        console.log('📷 Image buffer size:', imageBuffer.length, 'bytes');
-        console.log('📷 Image MIME type:', mimeType);
-        
-        // Convert buffer to File using toFile
-        const imageFile = await toFile(imageBuffer, 'selfie.jpg', {
-          type: mimeType || 'image/jpeg'
-        });
-        
-        console.log('📁 Created file object for OpenAI');
-        
-        // Create enhanced prompt for personalization
-        const personalizedPrompt = `${prompt}. Transform this into a circular sticker design incorporating the person's appearance and features from the reference image. Make it creative and stylized while maintaining the person's recognizable characteristics.`;
-        
-        result = await openai.images.edit({
-          model: "gpt-image-1",
+
+
+        // Use OpenAI client images.edit with toFile to pass the selfie buffer
+        const imageFile = await toFile(imageBuffer, 'selfie.png', { type: mimeType || 'image/png' });
+        const editResult = await openai.images.edit({
+          model: 'gpt-image-1',
           image: imageFile,
-          prompt: personalizedPrompt,
-          size: "1024x1024",
-          n: 1
+          prompt: `${prompt}. Transform this into a circular sticker design incorporating the person's appearance and features from the reference image. Make it creative and stylized while maintaining the person's recognizable characteristics. Do NOT include text, white borders, or rounded masks.`,
+          size: '1024x1024',
+          n: 1,
         });
-        
-        console.log('✅ OpenAI images.edit() success with real photo!');
-        
+        result = editResult;
+
       } else {
-        // Use regular generation for no photo
-        console.log('🚀 Using regular image generation...');
-        
-        result = await openai.images.generate({
-          model: "gpt-image-1",
-          prompt: prompt,
-          size: "1024x1024",
-          n: 1
+        // Use regular generation for no photo or when explicitly skipped
+        console.log('🚀 Using regular image generation (gpt-image-1 via REST)...');
+
+        const genResult = await openai.images.generate({
+          model: 'gpt-image-1',
+          prompt,
+          size: '1024x1024',
+          n: 1,
         });
-        
-        console.log('✅ OpenAI images.generate() success!');
+        result = genResult;
       }
-      
-      console.log('📊 Result structure keys:', Object.keys(result));
-      console.log('📊 Result data length:', result.data?.length);
-      console.log('📊 Has b64_json:', !!result.data?.[0]?.b64_json);
-      console.log('📊 Has url:', !!result.data?.[0]?.url);
-      
-      // Return envelope format for compatibility
-      return res.status(200).json({
-        status: 200,
-        ok: true,
-        bodyText: JSON.stringify(result),
-        bodyJson: result,
-      });
+
+
+      // Extract base64 image if present
+      const b64 = result?.data?.[0]?.b64_json || result?.data?.[0]?.b64 || result?.data?.[0]?.base64 || null;
+      const remoteUrl = result?.data?.[0]?.url || result?.data?.[0]?.image_url || null;
+
+      let imageDataUrl = null;
+      try {
+        if (b64) {
+          imageDataUrl = `data:image/png;base64,${b64}`;
+        } else if (remoteUrl) {
+          // Proxy remote URL to data URL to avoid CORS when composing on the client
+          try {
+            const p = await fetch(remoteUrl);
+            if (p.ok) {
+              const arr = await p.arrayBuffer();
+              const buf = Buffer.from(arr);
+              const contentType = p.headers.get('content-type') || 'image/png';
+              imageDataUrl = `data:${contentType};base64,${buf.toString('base64')}`;
+            }
+          } catch (e) {
+            // fallback: leave imageDataUrl null
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      return res.status(200).json({ status: 200, ok: true, imageDataUrl: imageDataUrl, bodyJson: result });
       
     } catch (openaiErr) {
       console.error('❌ OpenAI API error:', openaiErr);
@@ -121,63 +124,44 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-// Email send endpoint: expects { to, subject, text, imageUrl }
-app.post('/api/send-sticker-email', async (req, res) => {
+
+// Image proxy to convert external image URLs to data URLs to avoid CORS when composing canvas
+app.post('/api/proxy-image', async (req, res) => {
   try {
-    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-      return res.status(500).json({ error: 'SMTP credentials not configured on server.' });
-    }
+    const { url } = req.body || {};
+    if (!url) return res.status(400).json({ error: 'Missing url' });
+    // Basic validation: only allow http/https
+    if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Invalid url' });
 
-    const { to, subject, text, imageUrl } = req.body || {};
-    if (!to || !subject) return res.status(400).json({ error: 'Missing to or subject' });
-
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT),
-      secure: Number(SMTP_PORT) === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-
-    // Retrieve image as buffer
-    let attachment;
-    if (imageUrl && imageUrl.startsWith('data:')) {
-      // Data URL
-      const match = imageUrl.match(/^data:(.*);base64,(.*)$/);
-      if (match) {
-        const mime = match[1];
-        const data = Buffer.from(match[2], 'base64');
-        attachment = { filename: 'sticker.png', content: data, contentType: mime };
-      }
-    } else if (imageUrl) {
-      const resp = await fetch(imageUrl);
-      const buf = await resp.arrayBuffer();
-      const contentType = resp.headers.get('content-type') || 'image/png';
-      attachment = { filename: 'sticker.png', content: Buffer.from(buf), contentType };
-    }
-
-    const mailOpts = {
-      from: FROM_EMAIL,
-      to,
-      subject,
-      text: text || '',
-      attachments: attachment ? [attachment] : undefined,
-    };
-
-    await transporter.sendMail(mailOpts);
-    return res.json({ success: true });
+    const resp = await fetch(url);
+    if (!resp.ok) return res.status(502).json({ error: 'Failed to fetch target image', status: resp.status });
+    const buf = await resp.arrayBuffer();
+    const contentType = resp.headers.get('content-type') || 'image/png';
+    const b64 = Buffer.from(buf).toString('base64');
+    const dataUrl = `data:${contentType};base64,${b64}`;
+    return res.json({ dataUrl });
   } catch (err) {
-    console.error('send email error', err);
+    console.error('Proxy image error', err);
     return res.status(500).json({ error: String(err?.message || err) });
   }
 });
 
-// Serve static built site
+
+// Serve static built site if present, otherwise fall back to project index.html (development)
 const distPath = path.join(process.cwd(), 'dist');
-app.use(express.static(distPath));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
-});
+const distIndex = path.join(distPath, 'index.html');
+const rootIndex = path.join(process.cwd(), 'index.html');
+
+if (fs.existsSync(distIndex)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => res.sendFile(distIndex));
+} else if (fs.existsSync(rootIndex)) {
+  // In dev mode serve the project index.html directly
+  app.get('*', (req, res) => res.sendFile(rootIndex));
+} else {
+  // No index available
+  app.get('*', (req, res) => res.status(404).send('Not Found'));
+}
 
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => console.log(`Server listening on ${port}`));
@@ -185,4 +169,16 @@ const server = app.listen(port, () => console.log(`Server listening on ${port}`)
 if (server && typeof server.setTimeout === 'function') {
   server.setTimeout(0); // 0 = no timeout
   console.log('Server timeout disabled to allow long-running provider requests');
+}
+
+// In development, spawn Vite dev server so API + front run together
+if (process.env.NODE_ENV !== 'production' && process.env.SPAWN_VITE !== 'false') {
+  try {
+    const { spawn } = await import('child_process');
+    const viteProcess = spawn('npm', ['run', 'dev:vite'], { shell: true, stdio: 'inherit' });
+    viteProcess.on('error', (err) => console.warn('Failed to start Vite dev server:', err));
+    viteProcess.on('exit', (code) => console.log('Vite dev server exited with code', code));
+  } catch (e) {
+    console.warn('Could not spawn Vite dev server:', e);
+  }
 }

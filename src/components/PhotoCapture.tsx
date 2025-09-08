@@ -1,5 +1,4 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-
 import Webcam from 'react-webcam';
 
 type Props = {
@@ -125,7 +124,8 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
             </div>
           )}
         </div>
-        
+
+
         <div className="photo-capture-buttons">
           {!snapshot && !cameraStarted && (
             <>

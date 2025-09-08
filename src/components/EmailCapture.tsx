@@ -3,21 +3,30 @@ import type { FormEvent } from 'react';
 
 type Props = {
   onSubmit: (email: string) => void;
+  onSkip?: () => void;
 };
 
-const EmailCapture = ({ onSubmit }: Props) => {
+const EmailCapture = ({ onSubmit, onSkip }: Props) => {
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(email.trim());
+    if (email.trim()) {
+      onSubmit(email.trim());
+    }
+  };
+
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
+    }
   };
 
   return (
     <div className="email-capture-screen">
       <div className="email-section">
         <h1 className="email-title">Looking forward to making sense with you</h1>
-        
+
         <div className="email-divider">
           <div className="divider-line"></div>
           <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
@@ -30,12 +39,12 @@ const EmailCapture = ({ onSubmit }: Props) => {
             </defs>
           </svg>
         </div>
-        
+
         <p className="email-description">
           Would you like to get personalized insights for your business?<br />
           Leave us your email and we'll reach out to you.
         </p>
-        
+
         <form onSubmit={handleSubmit} className="email-form">
           <div className="email-input-wrapper">
             <input
@@ -44,17 +53,25 @@ const EmailCapture = ({ onSubmit }: Props) => {
               placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
-          
+
           <button
             type="submit"
-            className="hero-button"
+            className="email-submit-button"
           >
             SUBMIT
           </button>
+        </form>
 
-          </form>
+        <button
+          type="button"
+          className="email-skip-button"
+          onClick={handleSkip}
+        >
+          SKIP
+        </button>
       </div>
     </div>
   );
