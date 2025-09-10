@@ -1,3 +1,6 @@
+# .env y builder.config
+.env
+builder.config.json
 # Logs
 logs
 *.log

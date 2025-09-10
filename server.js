@@ -1,135 +1,53 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import OpenAI, { toFile } from 'openai';
 import submitUserDataHandler from './api/submit-user-data.js';
+import uploadImageHandler from './api/upload-image.js';
+import generateImageHandler from './api/generate-image.js';
 
 const app = express();
-app.use(express.json({ limit: '30mb' }));
+app.use(express.json({ limit: '50mb' }));
+
+// Ensure uploads directory exists and serve it publicly at /uploads
+const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  app.use('/uploads', express.static(uploadsDir));
+} catch (e) {
+  console.warn('Could not create or serve uploads directory', e);
+}
 
 // Mount submit-user-data API at top level so frontend requests to /api/submit-user-data are handled
 app.post('/api/submit-user-data', async (req, res) => submitUserDataHandler(req, res));
-
-// Support multiple possible environment variable names for OpenAI key (helps on different hosting setups)
-const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VERCEL_OPENAI_API_KEY || process.env.OPENAI_API_KEY_SERVER || null;
-if (!OPENAI_KEY) {
-  console.warn('Warning: OPENAI key not found in environment variables. Image generation will fail without a valid key. Checked vars: OPENAI_API_KEY, VITE_API_KEY_IMAGE_GENERATION, NEXT_PUBLIC_OPENAI_API_KEY, VERCEL_OPENAI_API_KEY, OPENAI_API_KEY_SERVER');
-}
-const openai = new OpenAI({ apiKey: OPENAI_KEY });
+// Mount upload-image endpoint
+app.post('/api/upload-image', async (req, res) => uploadImageHandler(req, res));
 
 
 
 
-app.post('/api/generate-image', async (req, res) => {
+
+app.post('/api/generate-image', (req, res) => generateImageHandler(req, res));
 
 
+// Test endpoint to ping configured n8n webhook from the server
+app.post('/api/test-n8n', async (req, res) => {
   try {
-    // Only accept generation requests from the UI to avoid accidental CLI usage and credit consumption
-    // Client must include header: 'x-source': 'ui'
-    if ((req.headers['x-source'] || req.headers['x-source'] === '') && String(req.headers['x-source']) !== 'ui') {
-      return res.status(403).json({ error: 'Image generation only allowed from UI' });
-    }
-
-    if (!OPENAI_KEY) return res.status(500).json({ error: 'Server missing OPENAI key' });
-
-    const { prompt, selfieDataUrl, photoStep } = req.body || {};
-    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
-
-    try {
-      let result;
-
-      // Decide whether user skipped photo or provided one
-      const skipped = (typeof photoStep === 'string' && photoStep === 'skipped') || !selfieDataUrl;
-
-      if (!skipped && selfieDataUrl) {
-        // Use real image with OpenAI images.edits via REST
-        console.log('🚀 Using real image with OpenAI images.edits (REST)...');
-
-        const match = selfieDataUrl.match(/^data:(.*);base64,(.*)$/);
-        if (!match) {
-          return res.status(400).json({ error: 'Invalid selfie data URL format' });
-        }
-        const mimeType = match[1];
-        const base64Data = match[2];
-        const imageBuffer = Buffer.from(base64Data, 'base64');
-
-
-        // Use OpenAI client images.edit with toFile to pass the selfie buffer
-        const imageFile = await toFile(imageBuffer, 'selfie.png', { type: mimeType || 'image/png' });
-        const editResult = await openai.images.edit({
-          model: 'gpt-image-1',
-          image: imageFile,
-          prompt: `${prompt}. Incorporate the person's appearance and features from the reference image into the composition. Make it creative and stylized while maintaining the person's recognizable characteristics. Keep the square format and full-bleed design. Do NOT include text, white borders, rounded masks, or circular crops.`,
-          size: '1024x1024',
-          n: 1,
-        });
-        result = editResult;
-
-      } else {
-        // Use regular generation for no photo or when explicitly skipped
-        console.log('🚀 Using regular image generation (gpt-image-1 via REST)...');
-
-        const genResult = await openai.images.generate({
-          model: 'gpt-image-1',
-          prompt,
-          size: '1024x1024',
-          n: 1,
-        });
-        result = genResult;
-      }
-
-
-      // Extract base64 image if present
-      const b64 = result?.data?.[0]?.b64_json || result?.data?.[0]?.b64 || result?.data?.[0]?.base64 || null;
-      const remoteUrl = result?.data?.[0]?.url || result?.data?.[0]?.image_url || null;
-
-      let imageDataUrl = null;
-      try {
-        if (b64) {
-          imageDataUrl = `data:image/png;base64,${b64}`;
-        } else if (remoteUrl) {
-          // Proxy remote URL to data URL to avoid CORS when composing on the client
-          try {
-            const p = await fetch(remoteUrl);
-            if (p.ok) {
-              const arr = await p.arrayBuffer();
-              const buf = Buffer.from(arr);
-              const contentType = p.headers.get('content-type') || 'image/png';
-              imageDataUrl = `data:${contentType};base64,${buf.toString('base64')}`;
-            }
-          } catch (e) {
-            // fallback: leave imageDataUrl null
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-
-      return res.status(200).json({ status: 200, ok: true, imageDataUrl: imageDataUrl, bodyJson: result });
-      
-    } catch (openaiErr) {
-      console.error('❌ OpenAI API error:', openaiErr);
-      console.error('❌ Error details:', {
-        message: openaiErr.message,
-        status: openaiErr.status,
-        code: openaiErr.code,
-        type: openaiErr.type
-      });
-      
-      return res.status(502).json({ 
-        status: openaiErr.status || 500,
-        ok: false,
-        bodyText: String(openaiErr?.message || openaiErr),
-        bodyJson: null,
-        error: String(openaiErr?.message || openaiErr) 
-      });
-    }
-  } catch (err) {
-    console.error('❌ General error:', err);
-    return res.status(500).json({ error: String(err?.message || err) });
+    const configuredN8n = process.env.N8N_WEBHOOK_URL || 'https://nano-ms.app.n8n.cloud/webhook-test/sticker-app';
+    const payload = req.body && Object.keys(req.body).length ? req.body : { test: 'ping', timestamp: new Date().toISOString() };
+    console.log('Server test-n8n: calling', configuredN8n);
+    const headers = { 'Content-Type': 'application/json' };
+    const n8nAuth = process.env.N8N_WEBHOOK_AUTH || null;
+    if (n8nAuth) headers['Authorization'] = String(n8nAuth);
+    const resp = await fetch(configuredN8n, { method: 'POST', headers, body: JSON.stringify(payload) });
+    const text = await resp.text().catch(() => '');
+    return res.status(200).json({ ok: resp.ok, status: resp.status, statusText: resp.statusText, body: text });
+  } catch (e) {
+    console.error('test-n8n error', e);
+    return res.status(500).json({ error: String(e?.message || e) });
   }
 });
-
 
 // Image proxy to convert external image URLs to data URLs to avoid CORS when composing canvas
 app.post('/api/proxy-image', async (req, res) => {

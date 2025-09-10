@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Image generation only allowed from UI' });
   }
 
-  const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VERCEL_OPENAI_API_KEY || process.env.OPENAI_API_KEY_SERVER || null;
+  const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.VITE_OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VERCEL_OPENAI_API_KEY || process.env.OPENAI_API_KEY_SERVER || null;
   if (!OPENAI_KEY) return res.status(500).json({ error: 'Server missing OPENAI key' });
 
   const openai = new OpenAI({ apiKey: OPENAI_KEY });
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       const editResult = await openai.images.edit({
         model: 'gpt-image-1',
         image: imageFile,
-        prompt: `${prompt}. Transform this into a circular sticker design incorporating the person's appearance and features from the reference image. Make it creative and stylized while maintaining the person's recognizable characteristics. Do NOT include text, white borders, or rounded masks.`,
+        prompt: prompt,
         size: '1024x1024',
         n: 1,
       });

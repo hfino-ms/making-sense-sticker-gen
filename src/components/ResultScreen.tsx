@@ -1,7 +1,8 @@
 import type { GenerationResult } from '../types';
 import styles from './ResultScreen.module.css';
 import Button from './ui/Button';
-import { useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { composeStickerFromSource } from '../utils/composeSticker';
 import type { FC } from 'react';
 
 type Props = {
@@ -19,38 +20,47 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
   // Choose sticker source (prefer server-provided full image URL or data URL)
   const stickerSource = (result as any)?.imageDataUrl || imageUrl;
 
-  // Helper: load image with crossOrigin and return HTMLImageElement
-  const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = (e) => reject(e);
-    img.src = src;
-  });
-
-  // Compose sticker for export (no frame overlay)
+  // Compose sticker for export (include frame overlay) — wrap the shared util
   const composeSticker = async (): Promise<string> => {
-    if (!stickerSource) return '';
+    return composeStickerFromSource(stickerSource);
+  };
+
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const downloadRef = useRef<HTMLAnchorElement | null>(null);
+
+  const composeAndGetDataUrl = async (): Promise<string> => {
     try {
-      const stickerImg = await loadImage(stickerSource);
-      const canvas = document.createElement('canvas');
-      const size = 1024; // Fixed high resolution
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('No canvas context');
-
-      // Fill white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, size, size);
-
-      // Draw sticker to fill canvas
-      ctx.drawImage(stickerImg, 0, 0, size, size);
-
-      return canvas.toDataURL('image/png');
+      const data = await composeSticker();
+      return data;
     } catch (e) {
-      console.error('Failed to compose sticker for export', e);
-      return stickerSource;
+      return stickerSource || '';
+    }
+  };
+
+  const showPreview = async () => {
+    const data = await composeAndGetDataUrl();
+    setPreviewSrc(data || null);
+    setPreviewOpen(true);
+  };
+
+  const downloadPreview = () => {
+    if (!previewSrc) return;
+    const a = downloadRef.current;
+    if (!a) return;
+    a.href = previewSrc;
+    a.download = `${archetype?.name || 'sticker'}.png`;
+    a.click();
+  };
+
+  const copyBase64 = async () => {
+    if (!previewSrc) return;
+    const b64 = previewSrc.split(',')[1] || previewSrc;
+    try {
+      await navigator.clipboard.writeText(b64);
+      // brief visual feedback could be added here
+    } catch (e) {
+      console.warn('Failed to copy base64 to clipboard', e);
     }
   };
 
@@ -78,17 +88,8 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
 
   const providerError = (result as any)?.providerError || null;
 
-  // Trigger the unified submission flow (frontend -> /api/submit-user-data -> n8n)
-  useEffect(() => {
-    try {
-      // call the handler provided by App which will POST to /api/submit-user-data
-      onShare();
-    } catch (e) {
-      // ignore errors to avoid breaking the UI
-      console.warn('Error calling onShare handler', e);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Removed automatic submission on mount. Submission should be triggered manually by the user
+  // via the Share button below to avoid duplicate webhook triggers and accidental resubmits.
 
 
   return (
@@ -142,11 +143,42 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
         </div>
 
         <div className={styles.resultButtons}>
+          <Button variant="secondary" onClick={onShare}>
+            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F0f4b2b4c1f4b4b719e6d2d6f3a8b5e6c?format=svg" alt="Share" className={styles.resultButtonIcon} />
+            SHARE
+          </Button>
+
           <Button variant="primary" onClick={printSticker}>
             <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F1146f9e4771b4cff95e916ed9381032d?format=svg" alt="Print" className={styles.resultButtonIcon} />
             PRINT
           </Button>
+
+          <Button variant="text" onClick={showPreview}>
+            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2Fb0d9f3c4e6a14b8aa2c3a9d6f7e8b1c2?format=svg" alt="Preview" className={styles.resultButtonIcon} />
+            PREVIEW FILE
+          </Button>
         </div>
+
+        {/* Preview area for the composed file that would be saved/sent */}
+        {previewOpen && (
+          <div className={styles.filePreviewContainer}>
+            <div className={styles.filePreviewImageWrapper}>
+              {previewSrc ? (
+                <img src={previewSrc} alt="Composed preview" className={styles.filePreviewImage} />
+              ) : (
+                <div className={styles.filePreviewPlaceholder}>No preview available</div>
+              )}
+            </div>
+
+            <div className={styles.previewActions}>
+              <a ref={downloadRef} style={{ display: 'none' }} />
+              <button className={styles.previewButton} onClick={downloadPreview}>Download PNG</button>
+              <button className={styles.previewButton} onClick={() => window.open(previewSrc || '', '_blank')}>Open in new tab</button>
+              <button className={styles.previewButton} onClick={copyBase64}>Copy base64</button>
+              <button className={styles.previewButton} onClick={() => { setPreviewOpen(false); setPreviewSrc(null); }}>Close</button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.startOverSection}>
           <Button variant="text" onClick={onRestart || (() => window.location.reload())}>

@@ -219,3 +219,61 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Preview UI for composed file */
+.filePreviewContainer {
+  width: 100%;
+  margin-top: 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.filePreviewImageWrapper {
+  width: 340px;
+  height: 340px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.filePreviewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.filePreviewPlaceholder {
+  color: #777;
+  font-size: 14px;
+}
+
+.previewActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.previewButton {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .filePreviewImageWrapper {
+    width: 260px;
+    height: 260px;
+  }
+}

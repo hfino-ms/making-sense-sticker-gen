@@ -12,6 +12,8 @@ import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
 import { deriveArchetype } from './utils/archetype';
 import { generateSticker } from './services/imageService';
+import { composeStickerFromSource } from './utils/composeSticker';
+import { buildPromptFromAnswers } from './utils/prompt';
 
 const STEPS = {
   Splash: 0,
@@ -121,15 +123,9 @@ function App() {
     await generateStickerAfterEmail();
   };
 
-  const handleEmailSkip = async () => {
-    setUserEmail(''); // Clear email if skipped
-    // Start generation process even without email
-    await generateStickerAfterEmail();
-  };
-
   const submitUserData = async () => {
     try {
-      // Build survey payload compatible with n8n (question_1..answer_5)
+      // Build survey payload
       const surveyObj: Record<string, string> = {};
       try {
         QUESTIONS.forEach((q, idx) => {
@@ -152,29 +148,77 @@ function App() {
         console.warn('Failed to build survey payload on client', e);
       }
 
+      // Compose sticker (with frame)
+      let stickerDataUrl = (result as any)?.imageDataUrl || (result as any)?.imageUrl || null;
+      try {
+        const composed = await composeStickerFromSource((result as any)?.imageDataUrl || (result as any)?.imageUrl || null);
+        if (composed) stickerDataUrl = composed;
+      } catch (e) {
+        console.warn('Failed to compose sticker on client before submit', e);
+      }
+
+      // Ensure sticker is a public URL. If we have a data URL, upload it to server which returns a public URL.
+      let stickerUrl = stickerDataUrl;
+      try {
+        if (stickerDataUrl && String(stickerDataUrl).startsWith('data:')) {
+          const uploadResp = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dataUrl: stickerDataUrl })
+          });
+          if (uploadResp.ok) {
+            const ujson = await uploadResp.json().catch(() => null);
+            if (ujson && ujson.url) stickerUrl = ujson.url;
+            else {
+              console.warn('Upload endpoint returned no url', ujson);
+            }
+          } else {
+            const txt = await uploadResp.text().catch(() => '');
+            console.warn('Upload endpoint failed', uploadResp.status, txt);
+            // surface server error to UI
+            setError(`Upload failed: ${uploadResp.status} ${txt}`);
+            setStep(STEPS.Result);
+            return;
+          }
+
+          // If after upload attempt stickerUrl is still a data URL, abort and inform user
+          if (stickerUrl && String(stickerUrl).startsWith('data:')) {
+            console.error('Sticker upload did not return a public URL. Aborting payload send.');
+            setError('No se pudo subir la imagen al servidor. Intenta nuevamente.');
+            setStep(STEPS.Result);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to upload composed sticker before payload', e);
+        setError(`Upload failed: ${String((e as any)?.message || e)}`);
+        setStep(STEPS.Result);
+      }
+
       const payload = {
         email: userEmail || '',
         name: userName || '',
         timestamp: new Date().toISOString(),
-        sticker: (result as any)?.imageUrl || (result as any)?.imageDataUrl || null,
+        sticker: stickerUrl,
         archetype: generatedArchetype?.name || (result as any)?.archetype?.name || generatedArchetype || (result as any)?.archetype || null,
         survey: surveyObj
       };
 
-      // Use VITE_N8N_WEBHOOK_URL if provided, otherwise default to the test webhook
-      let raw = (import.meta.env.VITE_N8N_WEBHOOK_URL as string) || 'https://nano-ms.app.n8n.cloud/webhook-test/sticker-app';
-      raw = String(raw).trim().replace(/^(https?:\/\/)+/i, '$1');
-      const endpoint = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-
-      await fetch(endpoint, {
+      console.log('Submitting payload to /api/submit-user-data:', payload);
+      const resp = await fetch('/api/submit-user-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        mode: 'cors'
+        body: JSON.stringify(payload)
       });
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => '');
+        console.error('Server responded with error when submitting payload:', resp.status, txt);
+      } else {
+        const json = await resp.json().catch(() => null);
+        console.log('Server submit response:', json);
+      }
     } catch (error) {
-      console.error('Error submitting user data (direct n8n):', error);
-      // Don't block the user experience if submission fails
+      console.error('Error submitting user data to server:', error);
     }
   };
 
@@ -191,31 +235,14 @@ function App() {
     try {
       if (!navigator.onLine) throw new Error('No internet connection. Please connect to continue.');
 
-      // Build a deterministic prompt from answers first so it always reflects user's choices
+      // Build a deterministic archetype from answers and generate a concise prompt using the dedicated util
       const fallbackArche = deriveArchetype(answers);
       setGeneratedArchetype(fallbackArche);
 
-
-      // Build the required fixed prompt using collected answers and chosen archetype
-      const findAnswerLabel = (qid: string) => {
-        try {
-          const q = QUESTIONS.find((qq) => qq.id === qid);
-          const ans = answers[qid];
-          if (!q || !ans) return 'N/A';
-          const opt = q.options?.find((o: any) => o.id === ans.choice);
-          if (opt && opt.label) return opt.label;
-          // If no option found, fall back to any numeric/intensity value or choice id
-          return ans?.choice ?? (ans?.intensity != null ? String(ans.intensity) : 'N/A');
-        } catch (e) {
-          return 'N/A';
-        }
-      };
-
-      const promptTemplate = `Create an original, unique sticker that embodies the archetype "${fallbackArche?.name}". Avoid using\n- archetype label\n- any text into the image\n- white borders.\n- transparent background\nOutput a high-resolution PNG (at least 1024x1024) suitable for display and printing. StyleToken:v2338;Draw inspiration from the following traits: Which best describes your approach to making business decisions?: ${findAnswerLabel('decision_style')}; Which mindset do you most identify with when new technologies emerge?: ${findAnswerLabel('innovation')}; With new opportunities, how would you describe your risk tolerance?: ${findAnswerLabel('risk')}; When working on a team project, which approach best describes your style?: ${findAnswerLabel('collaboration')}; When defining your vision for the future, which area is your primary focus?: ${findAnswerLabel('vision')}. Produce a high-quality, visually engaging sticker concept — be creative with composition; use colors drawn from the chosen archetype's colorPalette (do not force a specific hue set). The design should feature a character in the middle with small illustrations in the background. The background should fill the complete image and may be a single color or a subtle gradient that complements the palette. The style should be clean, simple, flat, with no text on it.`;
+      const arche = generatedArchetype ?? fallbackArche;
+      const promptToUse = buildPromptFromAnswers(arche, answers);
 
       setStep(STEPS.Generating);
-      const promptToUse = promptTemplate;
-      const arche = generatedArchetype ?? fallbackArche;
       const photoStep = capturedPhoto ? 'sent' : 'skipped';
       const res = await generateSticker(arche, capturedPhoto, promptToUse, photoStep);
       setResult(res);
@@ -271,7 +298,7 @@ function App() {
         />
       )}
       {step === STEPS.EmailCapture && (
-        <EmailCapture onSubmit={handleEmailSubmit} onSkip={handleEmailSkip} />
+        <EmailCapture onSubmit={handleEmailSubmit} />
       )}
       {step === STEPS.Photo && (
         <PhotoCapture onConfirm={(dataUrl?: string) => preparePrompt(dataUrl)} onSkip={() => preparePrompt(undefined)} />

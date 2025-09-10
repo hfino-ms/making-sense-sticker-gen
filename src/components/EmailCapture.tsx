@@ -3,21 +3,15 @@ import type { FormEvent } from 'react';
 import styles from './EmailCapture.module.css';
 import Button from './ui/Button';
 
-type Props = { onSubmit: (email: string) => void; onSkip?: () => void; };
+type Props = { onSubmit: (email: string) => void; };
 
-const EmailCapture = ({ onSubmit, onSkip }: Props) => {
+const EmailCapture = ({ onSubmit }: Props) => {
   const [email, setEmail] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (email.trim()) {
       onSubmit(email.trim());
-    }
-  };
-
-  const handleSkip = () => {
-    if (onSkip) {
-      onSkip();
     }
   };
 
@@ -38,10 +32,12 @@ const EmailCapture = ({ onSubmit, onSkip }: Props) => {
             </defs>
           </svg>
         </div>
+            
+        <p className={styles.emailHelper}>We’ll send you your sticker and the resulting archetype by email.</p>
 
         <p className={styles.emailDescription}>
-          Would you like to get personalized insights for your business?<br />
-          Leave us your email and we'll reach out to you.
+          Enter your email address below,
+and we'll send your new AI Agent directly to your inbox.
         </p>
 
         <form onSubmit={handleSubmit} className={styles.emailForm}>
@@ -59,9 +55,6 @@ const EmailCapture = ({ onSubmit, onSkip }: Props) => {
           <Button type="submit" variant="primary">SUBMIT</Button>
         </form>
 
-        <div className={styles.emailSkipButton}>
-          <Button variant="text" onClick={handleSkip}>SKIP</Button>
-        </div>
       </div>
     </div>
   );

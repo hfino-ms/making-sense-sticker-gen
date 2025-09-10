@@ -2,8 +2,14 @@ import { QUESTIONS } from '../data/questions';
 import type { Answers, Archetype } from '../types';
 
 export function buildPrompt(archetype: Archetype, includeSelfie: boolean): string {
-  // Simplified and strict prompt to avoid rounded masks and unwanted decorations
-  const base = `Create a high-quality 2x2 inch sticker image (square) that fills the canvas. Use color palette: ${archetype.colorPalette}. Background: ${archetype.backgroundStyle}. Subject inspiration: ${archetype.descriptor}. Do NOT include any text, logos, white borders, or rounded/circular masks. Produce a full-bleed square image suitable for printing.`;
+  // Updated prompt with new specifications
+  const base = `Create an original, unique sticker that embodies the concept "${archetype.name}". Avoid using 
+- any label 
+- any text into the image
+- white borders
+- transparent background
+Produce a high-quality, visually engaging sticker concept — be creative with composition, colors should be green, blue, purple, white and black
+The design should feature a character in the middle with small illustrations in the background. The character should have proportionally sized eyes, mouth, ears, and nose on its face. The background should fill the complete image and should be only one color. The style should be clean, simple, flat, with no text on it.`;
   const selfie = includeSelfie
     ? " If a selfie is provided, integrate the person's facial features subtly and respectfully into the composition while preserving the sticker style; do not crop the person with circular masks."
     : '';
@@ -24,7 +30,14 @@ export function buildPromptFromAnswers(archetype: Archetype, answers: Answers, v
 
   const traitsLine = traits.length ? `Traits: ${traits.join('; ')}.` : '';
 
-  let prompt = `Create a single high-quality, square (1:1) sticker image sized for 2x2 inches. Use palette ${archetype.colorPalette} and background style ${archetype.backgroundStyle}. Visual tone: ${archetype.descriptor}. ${traitsLine} Do NOT include text, labels, borders, or rounded/circular masks. Output a full-bleed PNG suitable for printing.`;
+  let prompt = `Create an original, unique sticker that embodies the concept "${archetype.name}". Avoid using 
+- any label 
+- any text into the image
+- white borders
+- transparent background
+Draw inspiration from the following traits: ${traitsLine} 
+Produce a high-quality, visually engaging sticker concept — be creative with composition, colors should be green, blue, purple, white and black
+The design should feature a character in the middle with small illustrations in the background. The character should have proportionally sized eyes, mouth, ears, and nose on its face. The background should fill the complete image and should be only one color. The style should be clean, simple, flat, with no text on it.`;
 
   if (variant) prompt += ` VariantToken:${variant}`;
   return prompt;

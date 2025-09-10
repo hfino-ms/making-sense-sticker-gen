@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api/generate-image': {
+      // Proxy all /api requests to the backend Express server on port 3000 during development
+      '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         configure: (proxy, options) => {
