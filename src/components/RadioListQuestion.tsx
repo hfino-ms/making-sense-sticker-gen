@@ -1,4 +1,5 @@
 import type { QuestionOption } from '../types';
+import styles from './RadioListQuestion.module.css';
 
 type Props = {
   options: QuestionOption[];
@@ -8,17 +9,17 @@ type Props = {
 
 const RadioListQuestion = ({ options, selectedId, onSelect }: Props) => {
   return (
-    <div className="radio-list-container">
+    <div className={styles.radioListContainer}>
       {options.map((option) => (
         <button
           key={option.id}
-          className={`radio-option ${selectedId === option.id ? 'selected' : ''}`}
+          className={`${styles.radioOption} ${selectedId === option.id ? styles.radioOptionSelected : ''}`}
           onClick={() => onSelect(option.id)}
         >
-          <div className={`radio-button ${selectedId === option.id ? 'checked' : ''}`}>
-            {selectedId === option.id && <div className="radio-dot"></div>}
+          <div className={`${styles.radioButton} ${selectedId === option.id ? styles.radioButtonChecked : ''}`}>
+            {selectedId === option.id && <div className={styles.radioDot}></div>}
           </div>
-          <span className="radio-label">{option.label}</span>
+          <span className={styles.radioLabel}>{option.label}</span>
         </button>
       ))}
     </div>

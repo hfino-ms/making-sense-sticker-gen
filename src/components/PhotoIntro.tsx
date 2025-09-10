@@ -1,18 +1,15 @@
-type Props = {
-  onOpenCamera: () => void;
-  onSkip: () => void;
-};
+import styles from './PhotoIntro.module.css';
+import Button from './ui/Button';
+
+type Props = { onOpenCamera: () => void; onSkip: () => void };
 
 const PhotoIntro = ({ onOpenCamera, onSkip }: Props) => {
   return (
-    <div className="photo-intro-screen">
-      <div className="photo-intro-section">
-        <h1 className="photo-intro-title">
-          Go beyond and<br />
-          personalize your robot
-        </h1>
-        
-        <div className="photo-intro-divider">
+    <div className={styles.photoIntroScreen}>
+      <div className={styles.photoIntroSection}>
+        <h1 className={styles.photoIntroTitle}>Go beyond and<br />personalize your robot</h1>
+
+        <div className={styles.photoIntroDivider}>
           <div className="divider-line"></div>
           <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
             <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
@@ -24,25 +21,12 @@ const PhotoIntro = ({ onOpenCamera, onSkip }: Props) => {
             </defs>
           </svg>
         </div>
-        
-        <p className="photo-intro-description">
-          Take a selfie to customize your robot's features to match your unique style.
-        </p>
-        
-        <div className="photo-intro-buttons">
-          <button 
-            className="nav-button secondary"
-            onClick={onSkip}
-          >
-            SKIP
-          </button>
-          
-          <button 
-            className="nav-button primary"
-            onClick={onOpenCamera}
-          >
-            OPEN CAMERA
-          </button>
+
+        <p className={styles.photoIntroDescription}>Take a selfie to customize your robot's features to match your unique style.</p>
+
+        <div className={styles.photoIntroButtons}>
+          <Button variant="text" onClick={onSkip}>SKIP</Button>
+          <Button variant="primary" onClick={onOpenCamera}>OPEN CAMERA</Button>
         </div>
       </div>
     </div>

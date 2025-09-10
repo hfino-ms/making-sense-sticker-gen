@@ -2,9 +2,13 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import OpenAI, { toFile } from 'openai';
+import submitUserDataHandler from './api/submit-user-data.js';
 
 const app = express();
 app.use(express.json({ limit: '30mb' }));
+
+// Mount submit-user-data API at top level so frontend requests to /api/submit-user-data are handled
+app.post('/api/submit-user-data', async (req, res) => submitUserDataHandler(req, res));
 
 // Support multiple possible environment variable names for OpenAI key (helps on different hosting setups)
 const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.VITE_API_KEY_IMAGE_GENERATION || process.env.NEXT_PUBLIC_OPENAI_API_KEY || process.env.VERCEL_OPENAI_API_KEY || process.env.OPENAI_API_KEY_SERVER || null;
@@ -17,6 +21,8 @@ const openai = new OpenAI({ apiKey: OPENAI_KEY });
 
 
 app.post('/api/generate-image', async (req, res) => {
+
+
   try {
     // Only accept generation requests from the UI to avoid accidental CLI usage and credit consumption
     // Client must include header: 'x-source': 'ui'
@@ -53,7 +59,7 @@ app.post('/api/generate-image', async (req, res) => {
         const editResult = await openai.images.edit({
           model: 'gpt-image-1',
           image: imageFile,
-          prompt: `${prompt}. Transform this into a circular sticker design incorporating the person's appearance and features from the reference image. Make it creative and stylized while maintaining the person's recognizable characteristics. Do NOT include text, white borders, or rounded masks.`,
+          prompt: `${prompt}. Incorporate the person's appearance and features from the reference image into the composition. Make it creative and stylized while maintaining the person's recognizable characteristics. Keep the square format and full-bleed design. Do NOT include text, white borders, rounded masks, or circular crops.`,
           size: '1024x1024',
           n: 1,
         });

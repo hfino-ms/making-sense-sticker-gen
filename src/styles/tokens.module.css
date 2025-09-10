@@ -1,0 +1,43 @@
+:global(:root) {
+  /* new small design-system tokens (preserve existing variables too) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --btn-padding: 12px 20px;
+  --radius-rounded: 9999px;
+  --radius-card: 12px;
+}
+
+/* Mobile-first utility classes */
+.container {
+  padding: var(--space-md);
+}
+
+.text-center { text-align: center; }
+
+.title { font-size: 22px; margin: 0 0 var(--space-sm); color: var(--gradient1-textContrast); }
+.subtle { color: var(--muted); font-size: 13px; }
+
+.card { background: transparent; border-radius: var(--radius-card); padding: var(--space-md); box-sizing: border-box; }
+
+.textarea {
+  width: 100%;
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  color: var(--gradient1-textContrast);
+  border: 1px solid rgba(255,255,255,0.04);
+  font-family: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.actionsRow { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+/* larger screens */
+@media (min-width: 600px) {
+  .container { padding: var(--space-lg); }
+  .title { font-size: 24px; }
+}

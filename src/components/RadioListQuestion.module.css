@@ -1,0 +1,162 @@
+/* iPad 11 Pro optimized radio list matching Figma design */
+.radioListContainer {
+  /* Use a responsive 4-column grid for desktop/tablet to match design */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 1100px; /* allow more horizontal space so options don't overlap CTAs */
+  margin: 0 auto;
+  align-items: start;
+  box-sizing: border-box;
+}
+
+.radioOption {
+  display: flex;
+  width: 100%;
+  padding: 18px 28px; /* slightly increased horizontal space for touch targets */
+  align-items: center;
+  gap: 20px;
+  border-radius: 10px;
+  background: #FFF;
+  box-shadow: 0 50px 60px 0 rgba(6, 6, 6, 0.10);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.radioOption:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.15);
+}
+
+.radioOptionSelected {
+  transform: translateY(-4px);
+  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.20);
+  background: linear-gradient(180deg, rgba(14,204,126,0.08), rgba(83,192,210,0.06));
+}
+
+.radioButton {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  aspect-ratio: 1/1;
+  border-radius: 10px;
+  border: 1px solid #616161;
+  background: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.radioButtonChecked {
+  border-color: #0ECC7E;
+  background: #0ECC7E;
+}
+
+.radioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFF;
+}
+
+.radioLabel {
+  color: #111210;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-transform: uppercase;
+  /* Safari font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive adjustments for smaller screens while maintaining iPad Pro optimization */
+@media (max-width: 768px) {
+  .radioListContainer {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    gap: 16px;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .radioOption {
+    width: 100%;
+    max-width: 420px;
+    padding: 14px 32px;
+    gap: 20px;
+  }
+
+  .radioButton {
+    width: 16px;
+    height: 16px;
+  }
+
+  .radioDot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .radioLabel {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .radioOption {
+    width: 100%;
+    max-width: 280px;
+    padding: 12px 24px;
+    gap: 16px;
+  }
+  
+  .radioButton {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .radioDot {
+    width: 5px;
+    height: 5px;
+  }
+  
+  .radioLabel {
+    font-size: 13px;
+  }
+}
+
+/* iPad Pro 11" specific optimization */
+@media (min-width: 744px) and (max-width: 1024px) {
+  .radioListContainer {
+    height: 280px;
+    max-width: 696px;
+  }
+  
+  .radioOption {
+    width: 286px;
+    padding: 16px 40px;
+    gap: 24px;
+  }
+  
+  .radioButton {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .radioDot {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .radioLabel {
+    font-size: 16px;
+  }
+}

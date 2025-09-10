@@ -1,5 +1,8 @@
-import type { FC } from 'react';
 import type { GenerationResult } from '../types';
+import styles from './ResultScreen.module.css';
+import Button from './ui/Button';
+import { useEffect } from 'react';
+import type { FC } from 'react';
 
 type Props = {
   result: GenerationResult;
@@ -7,18 +10,14 @@ type Props = {
   userEmail?: string;
   onShare: () => void;
   onPrint: () => void;
+  onRestart?: () => void;
 };
 
-const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
+const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart }) => {
   const { archetype, imageUrl } = result as any;
-  // Prefer SVG frame asset for crisp rendering (use provided uploaded SVG if available)
-  const FRAME_URL = "https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F8822292feba8457299fe95b2e072c9f8?format=svg";
-
+  // Use the frame URL directly - no complex composition
   // Choose sticker source (prefer server-provided full image URL or data URL)
   const stickerSource = (result as any)?.imageDataUrl || imageUrl;
-
-  // We will NOT pre-compose the image to avoid downsampling/pixelation. Instead, render the original sticker
-  // and overlay the frame via CSS. For share/print, compose on-demand at the sticker's natural resolution to include the frame.
 
   // Helper: load image with crossOrigin and return HTMLImageElement
   const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
@@ -29,42 +28,24 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
     img.src = src;
   });
 
-  // Helper: proxy frame to dataUrl to avoid CORS issues when composing
-  const proxyFrame = async () => {
-    try {
-      const proxyResp = await fetch('/api/proxy-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-source': 'ui' },
-        body: JSON.stringify({ url: FRAME_URL }),
-      });
-      if (proxyResp.ok) {
-        const pj = await proxyResp.json();
-        if (pj?.dataUrl) return pj.dataUrl;
-      }
-    } catch (e) {
-      // ignore
-    }
-    return FRAME_URL;
-  };
-
-  // Compose sticker+frame at original sticker resolution for printing/sharing
-  const composeStickerWithFrame = async (): Promise<string> => {
+  // Compose sticker for export (no frame overlay)
+  const composeSticker = async (): Promise<string> => {
     if (!stickerSource) return '';
     try {
-      const proxiedFrameSrc = await proxyFrame();
-      const [stickerImg, frameImg] = await Promise.all([loadImage(stickerSource), loadImage(proxiedFrameSrc)]);
+      const stickerImg = await loadImage(stickerSource);
       const canvas = document.createElement('canvas');
-      const w = stickerImg.naturalWidth || stickerImg.width || 1024;
-      const h = stickerImg.naturalHeight || stickerImg.height || 1024;
-      canvas.width = w;
-      canvas.height = h;
+      const size = 1024; // Fixed high resolution
+      canvas.width = size;
+      canvas.height = size;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('No canvas context');
 
-      // Draw sticker full-bleed
-      ctx.drawImage(stickerImg, 0, 0, w, h);
-      // Draw frame on top, scaled to cover canvas
-      ctx.drawImage(frameImg, 0, 0, w, h);
+      // Fill white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      // Draw sticker to fill canvas
+      ctx.drawImage(stickerImg, 0, 0, size, size);
 
       return canvas.toDataURL('image/png');
     } catch (e) {
@@ -79,11 +60,11 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
       onPrint();
       return;
     }
-    let outSrc = stickerSource || FRAME_URL;
+    let outSrc = stickerSource;
     try {
-      outSrc = await composeStickerWithFrame();
+      outSrc = await composeSticker();
     } catch (e) {
-      outSrc = stickerSource || FRAME_URL;
+      outSrc = stickerSource;
     }
 
     w.document.write(`<html><head><title>${archetype.name} Sticker</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff;">
@@ -94,50 +75,30 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
     setTimeout(() => onPrint(), 1000);
   };
 
-  const shareSticker = async () => {
-    const fileName = `${archetype.name.replace(/\s+/g, '-')}-sticker.png`;
+
+  const providerError = (result as any)?.providerError || null;
+
+  // Trigger the unified submission flow (frontend -> /api/submit-user-data -> n8n)
+  useEffect(() => {
     try {
-      const composedDataUrl = await composeStickerWithFrame();
-      const res = await fetch(composedDataUrl);
-      const blob = await res.blob();
-      if (navigator.share && (navigator as any).canShare?.({ files: [new File([blob], fileName, { type: blob.type })] })) {
-        await navigator.share({
-          title: `${archetype.name} Sticker`,
-          text: archetype.valueLine,
-          files: [new File([blob], fileName, { type: blob.type })],
-        });
-      } else {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
+      // call the handler provided by App which will POST to /api/submit-user-data
+      onShare();
     } catch (e) {
-      console.error('Share failed, falling back to raw sticker', e);
-      try {
-        const res = await fetch(stickerSource);
-        const blob = await res.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(a.href);
-      } catch {}
-    } finally {
-      setTimeout(() => onShare(), 500);
+      // ignore errors to avoid breaking the UI
+      console.warn('Error calling onShare handler', e);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   return (
-    <div className="result-screen">
+    <div className={styles.resultContainer}>
+      <div className={styles.resultSection}>
+        <h1 className={styles.resultTitle}>{userName ? `${userName}, you are a ${archetype.name}!` : `You are ${archetype.name}!`}</h1>
 
-      <div className="result-section">
-        <h1 className="result-title">{userName ? `${userName}, you are a ${archetype.name}!` : `You are ${archetype.name}!`}</h1>
-
-        <div className="result-divider">
-          <div className="divider-line"></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
+        <div className={styles.resultDivider}>
+          <div className={styles.dividerLine}></div>
+          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
             <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
             <defs>
               <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
@@ -148,36 +109,54 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint }) => {
           </svg>
         </div>
 
-        <div className="result-description">
-          <p className="result-line-1">{archetype.descriptor}</p>
-          <p className="result-line-2">{archetype.valueLine}</p>
+        <div className={styles.resultDescription}>
+          <p className={styles.resultLine1}>{archetype.descriptor}</p>
+          <p className={styles.resultLine2}>{archetype.valueLine}</p>
         </div>
+
+        {providerError && (
+          <div className={styles.resultProviderError}>Generation fallback used: {String(providerError)}</div>
+        )}
 
         {/* Archetype label layer (text) */}
-        <div className="archetype-label">{archetype?.name}</div>
+        <div className={styles.archetypeLabel}>{archetype?.name}</div>
 
-        {/* Sticker displayed as provided by the generator (no pre-composition to avoid pixelation). Frame is overlaid on top. */}
-        <div className="sticker-raw-container">
-          <img src={stickerSource || FRAME_URL} alt="Sticker" className="sticker-raw-img" />
-          <img src={FRAME_URL} alt="Frame overlay" className="sticker-frame-overlay" />
+        {/* Sticker display contained within a frame overlay */}
+        <div className={styles.stickerContainer}>
+          <div className={styles.stickerInner}>
+            {stickerSource ? (
+              <img src={stickerSource} alt="Sticker" className={styles.stickerImage} />
+            ) : (
+              <div className={styles.stickerPlaceholder} />
+            )}
+          </div>
+
+          {/* Frame overlay (decorative) */}
+          <img
+            src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000"
+            srcSet="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=1000 1x, https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000 2x"
+            alt="frame"
+            className={styles.frameOverlay}
+            decoding="async"
+          />
         </div>
 
-        <div className="result-buttons">
-          <button className="result-button secondary" onClick={shareSticker}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F46582c5b707c47f389cf1daf4acaea9d?format=svg" alt="Share" className="result-button-icon" />
-            SHARE
-          </button>
-
-          <button className="result-button primary" onClick={printSticker}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F1146f9e4771b4cff95e916ed9381032d?format=svg" alt="Print" className="result-button-icon" />
+        <div className={styles.resultButtons}>
+          <Button variant="primary" onClick={printSticker}>
+            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F1146f9e4771b4cff95e916ed9381032d?format=svg" alt="Print" className={styles.resultButtonIcon} />
             PRINT
-          </button>
+          </Button>
         </div>
 
-        <div className="result-email">
+        <div className={styles.startOverSection}>
+          <Button variant="text" onClick={onRestart || (() => window.location.reload())}>
+            START OVER
+          </Button>
+        </div>
+
+        <div className={styles.resultEmail}>
         </div>
       </div>
-
     </div>
   );
 };

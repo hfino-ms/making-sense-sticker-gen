@@ -1,9 +1,9 @@
-import type { FC } from 'react';
 import type { Question } from '../types';
-import Stepper from './Stepper';
 import LinearSlider from './LinearSlider';
-
 import RadioListQuestion from './RadioListQuestion';
+import styles from './QuestionScreen.module.css';
+import Button from './ui/Button';
+import type { FC } from 'react';
 
 type Props = {
   question: Question;
@@ -11,7 +11,7 @@ type Props = {
   onSelect: (optionId: string, intensity?: number) => void;
   onNext: () => void;
   onPrevious: () => void;
-  onClose: () => void;
+  onClose?: () => void;
   step: number;
   total: number;
 };
@@ -22,7 +22,6 @@ const QuestionScreen: FC<Props> = ({
   onSelect,
   onNext,
   onPrevious,
-  onClose,
   step,
   total
 }) => {
@@ -51,7 +50,6 @@ const QuestionScreen: FC<Props> = ({
       case 'dial':
         return (
           <LinearSlider
-
             value={getDialValue()}
             onChange={handleDialChange}
           />
@@ -69,60 +67,48 @@ const QuestionScreen: FC<Props> = ({
       case 'icons':
       default:
         return (
-          <div className="question-options">
-            {question.options.map((option) => (
-              <button
-                key={option.id}
-                className={`question-option ${selected?.choice === option.id ? 'selected' : ''}`}
-                onClick={() => handleOptionClick(option.id)}
-              >
-                {option.icon && (
-                  <span className="option-icon-wrap">
-                    <img
-                      src={option.icon}
-                      alt={`${option.label} icon`}
-                      className="option-icon"
-                    />
-                  </span>
-                )}
-                <span className="option-label">{option.label}</span>
-              </button>
-            ))}
+          <div className={styles.questionCardsContainer}>
+            <div className={styles.questionOptions}>
+              {question.options.map((option) => (
+                <button
+                  key={option.id}
+                  className={`${styles.questionOption} ${selected?.choice === option.id ? styles.questionOptionSelected : ''}`}
+                  onClick={() => handleOptionClick(option.id)}
+                >
+                  {option.icon && (
+                    <div className={styles.optionIcon}>
+                      <img
+                        src={option.icon}
+                        alt={`${option.label} icon`}
+                      />
+                    </div>
+                  )}
+                  <div className={styles.optionLabel}>{option.label}</div>
+                </button>
+              ))}
+            </div>
           </div>
         );
     }
   };
 
   return (
-    <div className="question-screen">
-      <Stepper 
-        currentStep={step} 
-        totalSteps={total} 
-        onClose={onClose}
-      />
-      
-      <div className="question-content">
-        <div className="question-section">
-          <h1 className="question-title">{question.title}</h1>
-          
+    <div className="screen-container">
+      <div className={styles.questionMain}>
+        <div className={styles.questionSection}>
+          <div className={styles.questionHeaderSection}>
+            <h1 className={styles.questionTitle}>{question.title}</h1>
+          </div>
+
           {renderQuestionContent()}
-          
-          <div className="question-navigation">
-            <button 
-              className="nav-button secondary"
-              onClick={onPrevious}
-              disabled={step === 1}
-            >
+
+          <div className={styles.questionNavigation}>
+            <Button variant="secondary" onClick={onPrevious} disabled={step === 1}>
               PREVIOUS
-            </button>
-            
-            <button
-              className="nav-button primary"
-              onClick={onNext}
-              disabled={!selected}
-            >
+            </Button>
+            <Button variant="primary" onClick={onNext} disabled={!selected}>
               {step === total ? 'FINISH' : 'NEXT'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

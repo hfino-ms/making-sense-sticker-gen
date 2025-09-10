@@ -1,0 +1,221 @@
+.resultContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.resultSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 690px;
+  gap: 40px;
+  padding-top: 24px;
+  padding-bottom: 60px;
+}
+
+.resultTitle {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 52px;
+  text-align: center;
+}
+
+.resultDivider {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 49px;
+  height: 4px;
+  position: relative;
+}
+
+.dividerLine {
+  width: 42px;
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+}
+
+.dividerDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.resultDescription {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+
+.resultLine1 {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 22px;
+  text-align: center;
+}
+
+.resultLine2 {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+.resultProviderError {
+  font-size: 12px;
+  color: rgba(255, 165, 0, 0.8);
+  margin: 8px 0;
+}
+
+.archetypeLabel {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+}
+
+/* Simple sticker container - follows Figma design exactly */
+.stickerContainer {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  flex-shrink: 0;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inner area where the actual sticker image is drawn. This provides padding so the
+   sticker never overlaps the decorative frame, and guarantees the same visual
+   container whether an image is present or not. */
+.stickerInner {
+  position: relative;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: #fff; /* keep white background for printable stickers */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  z-index: 1;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.stickerImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ensure whole sticker fits inside the frame */
+  display: block;
+}
+
+.stickerPlaceholder {
+  width: 80%;
+  height: 80%;
+  background: linear-gradient(180deg, #f2f6f5 0%, #eaf3f2 100%);
+  border-radius: 4px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.frameOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 3;
+  image-rendering: auto; /* prefer smooth scaling */
+  will-change: transform; /* hint to browser for smoother compositing */
+}
+
+.resultButtons {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.resultButtonIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.startOverSection {
+  margin-top: 20px;
+}
+
+.resultEmail {
+  /* Reserved for email input if needed */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .resultTitle {
+    font-size: 32px;
+    line-height: 36px;
+  }
+  
+  .resultLine1,
+  .resultLine2 {
+    font-size: 16px;
+    line-height: 20px;
+  }
+  
+  .stickerContainer {
+    width: 280px;
+    height: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .resultSection {
+    gap: 32px;
+    padding-top: 16px;
+  }
+  
+  .resultTitle {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  
+  .stickerContainer {
+    width: 260px;
+    height: 260px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

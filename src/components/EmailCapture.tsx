@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import styles from './EmailCapture.module.css';
+import Button from './ui/Button';
 
-type Props = {
-  onSubmit: (email: string) => void;
-  onSkip?: () => void;
-};
+type Props = { onSubmit: (email: string) => void; onSkip?: () => void; };
 
 const EmailCapture = ({ onSubmit, onSkip }: Props) => {
   const [email, setEmail] = useState('');
@@ -23,11 +22,11 @@ const EmailCapture = ({ onSubmit, onSkip }: Props) => {
   };
 
   return (
-    <div className="email-capture-screen">
-      <div className="email-section">
-        <h1 className="email-title">Looking forward to making sense with you</h1>
+    <div className={styles.emailScreen}>
+      <div className={styles.emailSection}>
+        <h1 className={styles.emailTitle}>Looking forward to making sense with you</h1>
 
-        <div className="email-divider">
+        <div className={styles.emailDivider}>
           <div className="divider-line"></div>
           <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
             <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
@@ -40,16 +39,16 @@ const EmailCapture = ({ onSubmit, onSkip }: Props) => {
           </svg>
         </div>
 
-        <p className="email-description">
+        <p className={styles.emailDescription}>
           Would you like to get personalized insights for your business?<br />
           Leave us your email and we'll reach out to you.
         </p>
 
-        <form onSubmit={handleSubmit} className="email-form">
-          <div className="email-input-wrapper">
+        <form onSubmit={handleSubmit} className={styles.emailForm}>
+          <div className={styles.emailInputWrapper}>
             <input
               type="email"
-              className="email-input"
+              className={styles.emailInput}
               placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -57,21 +56,12 @@ const EmailCapture = ({ onSubmit, onSkip }: Props) => {
             />
           </div>
 
-          <button
-            type="submit"
-            className="email-submit-button"
-          >
-            SUBMIT
-          </button>
+          <Button type="submit" variant="primary">SUBMIT</Button>
         </form>
 
-        <button
-          type="button"
-          className="email-skip-button"
-          onClick={handleSkip}
-        >
-          SKIP
-        </button>
+        <div className={styles.emailSkipButton}>
+          <Button variant="text" onClick={handleSkip}>SKIP</Button>
+        </div>
       </div>
     </div>
   );

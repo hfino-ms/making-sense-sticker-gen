@@ -1,9 +1,10 @@
-import type { FC, ReactNode } from 'react';
+import type { FC } from 'react';
+import styles from './ErrorBanner.module.css';
 
-type Props = { children: ReactNode };
+type Props = { children: React.ReactNode };
 
 const ErrorBanner: FC<Props> = ({ children }) => (
-  <div className="error-banner" role="alert">{children}</div>
+  <div className={styles.errorBanner} role="alert">{children}</div>
 );
 
 export default ErrorBanner;

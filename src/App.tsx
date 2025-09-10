@@ -1,5 +1,5 @@
-import './App.css';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import Layout from './components/Layout';
 import SplashScreen from './components/SplashScreen';
 import NameInput from './components/NameInput';
 import QuestionScreen from './components/QuestionScreen';
@@ -7,7 +7,6 @@ import EmailCapture from './components/EmailCapture';
 import PhotoCapture from './components/PhotoCapture';
 import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
-import ThankYouScreen from './components/ThankYouScreen';
 import ErrorBanner from './components/ErrorBanner';
 import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
@@ -28,9 +27,6 @@ const STEPS = {
 } as const;
 
 function App() {
-  const LOGO_LIGHT = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F361d511becfe4af99cffd14033941816?format=webp&width=800';
-  const LOGO_DARK = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F8a91974e9a9e4d5399b528034240d956?format=webp&width=800';
-
   const [step, setStep] = useState<number>(STEPS.Splash);
   const [userName, setUserName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
@@ -51,15 +47,9 @@ function App() {
     } catch (e) {}
   };
 
-  // Simplified: set default theme and enable overlay after a short delay
+  // Set default theme
   useEffect(() => {
     setThemeOnDocument('light');
-
-    // ensure overlay starts hidden, then show after a small timeout
-    document.documentElement.classList.remove('overlay-ready');
-    const t = window.setTimeout(() => {
-      document.documentElement.classList.add('overlay-ready');
-    }, 300);
 
     // ONE-TIME fullscreen attempt triggered by first user interaction (gesture required by browsers)
     let attemptedFull = false;
@@ -81,35 +71,8 @@ function App() {
     window.addEventListener('pointerdown', tryFullscreen, { once: true });
 
     return () => {
-      window.clearTimeout(t);
-      document.documentElement.classList.remove('overlay-ready');
       try { window.removeEventListener('pointerdown', tryFullscreen); } catch (e) {}
     };
-  }, []);
-
-  // Particle background: generate deterministic particle config on mount to avoid reflows
-  const particleConfig = useMemo(() => {
-    const amount = 18;
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    // Greens only: darker palette for dark theme, lighter palette for light theme
-    const colors = dark
-      ? ['#042f28', '#0a6b55', '#0ecc7e'] // dark greens -> deep, mid, bright
-      : ['#bff7eb', '#73e6c9', '#0ecc7e']; // light greens -> soft, mid, bright
-
-    const arr = new Array(amount).fill(0).map((_, i) => {
-      const sizeVw = 8 + Math.floor(Math.random() * 18); // between 8vw and 26vw roughly
-      const top = Math.floor(Math.random() * 100);
-      const left = Math.floor(Math.random() * 100);
-      const duration = (4 + Math.random() * 8).toFixed(2) + 's';
-      const delay = '-' + (Math.random() * 12).toFixed(2) + 's';
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const blur = Math.floor(8 + Math.random() * 30);
-      const x = Math.random() > 0.5 ? -1 : 1;
-      const boxShadow = `${sizeVw * 2 * x}px 0 ${blur}px ${color}`;
-      const transformOrigin = `${Math.floor((Math.random() - 0.5) * 50)}vw ${Math.floor((Math.random() - 0.5) * 50)}vh`;
-      return { sizeVw, top, left, duration, delay, color, boxShadow, transformOrigin, key: `p-${i}` };
-    });
-    return arr;
   }, []);
 
   const handleSelect = (optId: string, intensity?: number) => {
@@ -166,19 +129,51 @@ function App() {
 
   const submitUserData = async () => {
     try {
-      await fetch('/api/submit-user-data', {
+      // Build survey payload compatible with n8n (question_1..answer_5)
+      const surveyObj: Record<string, string> = {};
+      try {
+        QUESTIONS.forEach((q, idx) => {
+          const slot = idx + 1;
+          surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
+          const ans = (answers || {})[q.id];
+          if (!ans) {
+            surveyObj[`answer_${slot}`] = '';
+            return;
+          }
+          if (typeof ans === 'object') {
+            const choiceId = ans.choice;
+            const opt = q.options?.find((o: any) => o.id === choiceId);
+            surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
+          } else {
+            surveyObj[`answer_${slot}`] = String(ans);
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to build survey payload on client', e);
+      }
+
+      const payload = {
+        email: userEmail || '',
+        name: userName || '',
+        timestamp: new Date().toISOString(),
+        sticker: (result as any)?.imageUrl || (result as any)?.imageDataUrl || null,
+        archetype: generatedArchetype?.name || (result as any)?.archetype?.name || generatedArchetype || (result as any)?.archetype || null,
+        survey: surveyObj
+      };
+
+      // Use VITE_N8N_WEBHOOK_URL if provided, otherwise default to the test webhook
+      let raw = (import.meta.env.VITE_N8N_WEBHOOK_URL as string) || 'https://nano-ms.app.n8n.cloud/webhook-test/sticker-app';
+      raw = String(raw).trim().replace(/^(https?:\/\/)+/i, '$1');
+      const endpoint = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+      await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: userName,
-          email: userEmail,
-          respuestas: answers,
-          arquetipo: generatedArchetype || result?.archetype,
-          imagenGenerada: result?.imageUrl
-        })
+        body: JSON.stringify(payload),
+        mode: 'cors'
       });
     } catch (error) {
-      console.error('Error submitting user data:', error);
+      console.error('Error submitting user data (direct n8n):', error);
       // Don't block the user experience if submission fails
     }
   };
@@ -216,7 +211,7 @@ function App() {
         }
       };
 
-      const promptTemplate = `Create an original, unique sticker that embodies the archetype "${fallbackArche?.name}". Avoid using\n- archetype label\n- any text into the image\n- white borders.\n- transparent background\nThe image should be 100x100px. StyleToken:v2338;Draw inspiration from the following traits: Which best describes your approach to making business decisions?: ${findAnswerLabel('decision_style')}; Which mindset do you most identify with when new technologies emerge?: ${findAnswerLabel('innovation')}; With new opportunities, how would you describe your risk tolerance?: ${findAnswerLabel('risk')}; When working on a team project, which approach best describes your style?: ${findAnswerLabel('collaboration')}; When defining your vision for the future, which area is your primary focus?: ${findAnswerLabel('vision')}. Produce a high-quality, visually engaging sticker concept — be creative with composition, colors should be green, blue, purple, white and black\nThe design should feature a character in the middle with small illustrations in the background. The background should fill the complete image and should be only one color. The style should be clean, simple, flat, with no text on it.`;
+      const promptTemplate = `Create an original, unique sticker that embodies the archetype "${fallbackArche?.name}". Avoid using\n- archetype label\n- any text into the image\n- white borders.\n- transparent background\nOutput a high-resolution PNG (at least 1024x1024) suitable for display and printing. StyleToken:v2338;Draw inspiration from the following traits: Which best describes your approach to making business decisions?: ${findAnswerLabel('decision_style')}; Which mindset do you most identify with when new technologies emerge?: ${findAnswerLabel('innovation')}; With new opportunities, how would you describe your risk tolerance?: ${findAnswerLabel('risk')}; When working on a team project, which approach best describes your style?: ${findAnswerLabel('collaboration')}; When defining your vision for the future, which area is your primary focus?: ${findAnswerLabel('vision')}. Produce a high-quality, visually engaging sticker concept — be creative with composition; use colors drawn from the chosen archetype's colorPalette (do not force a specific hue set). The design should feature a character in the middle with small illustrations in the background. The background should fill the complete image and may be a single color or a subtle gradient that complements the palette. The style should be clean, simple, flat, with no text on it.`;
 
       setStep(STEPS.Generating);
       const promptToUse = promptTemplate;
@@ -231,9 +226,9 @@ function App() {
     }
   };
 
-  const goToThankYou = async () => {
+  const submitAndStay = async () => {
     await submitUserData();
-    setStep(STEPS.ThankYou);
+    // remain on the current screen after submitting
   };
 
   const restart = () => {
@@ -248,33 +243,17 @@ function App() {
     setThemeOnDocument('light');
   };
 
+  // Determine if we should show progress stepper
+  const showProgress = step === STEPS.Questions;
+  const currentStepForProgress = step === STEPS.Questions ? questionIndex + 1 : 1;
+
   return (
-    <div className="app-root">
-      <div className="theme-overlay" aria-hidden>
-        {particleConfig.map((p) => (
-          <span
-            key={p.key}
-            className="particle"
-            style={{
-              top: p.top + '%',
-              left: p.left + '%',
-              width: `min(${p.sizeVw}vmin, 140px)`,
-              height: `min(${p.sizeVw}vmin, 140px)`,
-              background: p.color,
-              boxShadow: p.boxShadow,
-              transformOrigin: p.transformOrigin,
-              animationDuration: p.duration,
-              animationDelay: p.delay,
-            }}
-          />
-        ))}
-      </div>
-
-      <header className="app-header" aria-hidden>
-        <img className="brand-logo-img logo-light persistent-logo" src={LOGO_LIGHT} alt="Making Sense logo light" />
-        <img className="brand-logo-img logo-dark persistent-logo" src={LOGO_DARK} alt="Making Sense logo dark" />
-      </header>
-
+    <Layout
+      showProgress={showProgress}
+      currentStep={currentStepForProgress}
+      totalSteps={total}
+      onClose={handleCloseQuestions}
+    >
       {error && <ErrorBanner>{error}</ErrorBanner>}
 
       {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
@@ -298,13 +277,9 @@ function App() {
         <PhotoCapture onConfirm={(dataUrl?: string) => preparePrompt(dataUrl)} onSkip={() => preparePrompt(undefined)} />
       )}
 
-
       {step === STEPS.Generating && <LoadingScreen />}
-      {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} onShare={goToThankYou} onPrint={goToThankYou} />}
-      {step === STEPS.ThankYou && <ThankYouScreen onRestart={restart} />}
-
-      <footer className="app-footer">Making Sense - 2025. All rights reserved.</footer>
-    </div>
+      {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
+    </Layout>
   );
 }
 

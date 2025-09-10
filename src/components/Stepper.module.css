@@ -1,0 +1,10 @@
+.stepperNavigation { display:flex; align-items:center; justify-content:space-between; width:100%; padding:12px 16px; box-sizing:border-box; }
+.stepperSteps { display:flex; gap:8px; align-items:center; flex:1; }
+.stepItem { flex:1; }
+.stepLine { height:6px; border-radius:6px; background: rgba(255,255,255,0.06); transition: background 200ms ease, transform 180ms ease; }
+.stepCompleted { background: linear-gradient(90deg,var(--primary-main),var(--secondary-main)); }
+.stepPending { background: rgba(255,255,255,0.06); }
+.stepperMenu { margin-left:12px; }
+.stepperCloseBtn { background:transparent; border: none; padding:8px; border-radius:8px; cursor:pointer; }
+
+@media (max-width:600px) { .stepperNavigation { padding:8px 12px; } }

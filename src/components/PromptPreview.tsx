@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import type { Archetype } from '../types';
+import tokens from '../styles/tokens.module.css';
+import styles from './PromptPreview.module.css';
+import Button from './ui/Button';
 
 type Props = {
   archetype: Archetype;
@@ -14,14 +17,14 @@ export default function PromptPreview({ archetype, prompt, onChange, onGenerate,
   const [local, setLocal] = useState(prompt);
 
   return (
-    <div className="screen-container">
-      <h2 className="question-title">Prompt preview</h2>
-      <p className="intro-copy">Review or tweak the prompt that will be sent to the image generator.</p>
+    <div className={`${tokens.container} ${styles.previewRoot}`}>
+      <h2 className={tokens.title}>Prompt preview</h2>
+      <p className={tokens.subtle}>Review or tweak the prompt that will be sent to the image generator.</p>
 
-      <div style={{ width: '100%' }}>
-        <div style={{ marginBottom: 8, textAlign: 'center' }}>
-          <strong style={{ color: 'var(--gradient1-textContrast)' }}>{archetype.name}</strong>
-          <div style={{ fontSize: 13, color: 'var(--muted)' }}>{archetype.descriptor}</div>
+      <div className={styles.previewInner}>
+        <div className={styles.previewHeader}>
+          <strong className={styles.archetypeName}>{archetype.name}</strong>
+          <div className={tokens.subtle}>{archetype.descriptor}</div>
         </div>
 
         <textarea
@@ -29,17 +32,17 @@ export default function PromptPreview({ archetype, prompt, onChange, onGenerate,
           onChange={(e) => setLocal(e.target.value)}
           onBlur={() => onChange(local)}
           rows={8}
-          style={{ width: '100%', borderRadius: 12, padding: 12, background: 'rgba(255,255,255,0.02)', color: 'var(--gradient1-textContrast)', border: '1px solid rgba(255,255,255,0.04)' }}
+          className={tokens.textarea}
         />
       </div>
 
-      <div className="actions-row">
-        <button className="secondary-button" onClick={() => { setLocal(prompt); onChange(prompt); }} disabled={loading}>Reset</button>
-        <button className="ghost-button" onClick={onRegenerate} disabled={loading}>Regenerate Prompt</button>
-        <button className="primary-button" onClick={onGenerate} disabled={loading}>{loading ? 'Generating...' : 'Generate Image'}</button>
+      <div className={tokens.actionsRow}>
+        <Button variant="secondary" onClick={() => { setLocal(prompt); onChange(prompt); }} disabled={loading}>Reset</Button>
+        <Button variant="ghost" onClick={onRegenerate} disabled={loading}>Regenerate Prompt</Button>
+        <Button variant="primary" onClick={onGenerate} disabled={loading}>{loading ? 'Generating...' : 'Generate Image'}</Button>
       </div>
 
-      <p className="privacy-note">You can edit the prompt to adjust style or remove personal references. Changes are not stored.</p>
+      <p className={styles.privacyNote}>You can edit the prompt to adjust style or remove personal references. Changes are not stored.</p>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import styles from './NameInput.module.css';
+import Button from './ui/Button';
 
-type Props = {
-  onContinue: (name: string) => void;
-};
+type Props = { onContinue: (name: string) => void };
 
 const NameInput = ({ onContinue }: Props) => {
   const [name, setName] = useState('');
@@ -16,30 +16,34 @@ const NameInput = ({ onContinue }: Props) => {
   };
 
   return (
-    <div className="name-input-screen">
-      <div className="name-section">
-        <h1 className="name-title">What should I call you?</h1>
-        
-        <form onSubmit={handleSubmit} className="name-form">
-          <div className="name-input-wrapper">
-            <input
-              type="text"
-              className="name-input"
-              placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoFocus
-            />
+    <div className="screen-container">
+      <div className={styles.nameSection}>
+        <div className={styles.nameContent}>
+          <div className={styles.nameHeaderSection}>
+            <h1 className={styles.nameTitle}>What should I call you?</h1>
+            <form onSubmit={handleSubmit} className={styles.nameForm}>
+              <div className={styles.nameInputWrapper}>
+                <div className={styles.nameInputField}>
+                  <div className={styles.nameInputContainer}>
+                    <input
+                      type="text"
+                      className={styles.nameInput}
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.nameButtonWrapper}>
+                <Button type="submit" variant="primary" disabled={!name.trim()}>
+                  CONTINUE
+                </Button>
+              </div>
+            </form>
           </div>
-          
-          <button 
-            type="submit" 
-            className="hero-button"
-            disabled={!name.trim()}
-          >
-            CONTINUE
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );

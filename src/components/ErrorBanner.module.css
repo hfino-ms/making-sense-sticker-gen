@@ -1,0 +1,5 @@
+.errorBanner { background: rgba(255,80,80,0.06); color: #ff5b5b; padding: 8px 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+
+@media (min-width: 769px) {
+  .errorBanner { padding: 12px 16px; }
+}

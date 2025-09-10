@@ -1,0 +1,225 @@
+/* Mobile-first loading screen styles for LoadingScreen component */
+.loadingScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  padding: 20px 16px;
+  box-sizing: border-box;
+  animation: fadeIn 360ms ease both;
+  background: transparent; /* allow animated background to show through */
+  backdrop-filter: none; /* remove blur to see animated background */
+  overflow: hidden;
+}
+
+.loadingSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  gap: 40px;
+  padding: 0 16px;
+  max-width: 740px;
+  justify-content: center;
+}
+
+.loadingContentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  transition: opacity 150ms ease-in-out;
+}
+
+/* Titles inside the animated content should be hidden because the
+   main title is rendered statically above. This preserves layout
+   while allowing only the variable content below the title to animate. */
+.loadingContentWrapper .loadingMainTitle { display: none; }
+
+.fadeIn {
+  opacity: 1;
+}
+
+.fadeOut {
+  opacity: 0;
+}
+
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.loadingMainTitle {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.loadingSubtitle {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.22;
+  text-align: center;
+}
+
+.loadingDivider {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 49px;
+  height: 4px;
+  position: relative;
+}
+
+.dividerLine {
+  width: 42px;
+  height: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+}
+
+.dividerDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 4px;
+}
+
+.loadingFeatures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid rgba(14, 204, 126, 0.2);
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.featureItem:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.loadingDescriptionSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.loadingDescription {
+  margin: 0;
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.22;
+  text-align: center;
+}
+
+.loadingServicesSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.servicesCarousel {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0 8px;
+  justify-content: center;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.servicesCarousel::-webkit-scrollbar { display: none; }
+
+.serviceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  min-width: 220px;
+  max-width: 260px;
+  border-radius: 8px;
+  border: 1px solid rgba(14, 204, 126, 0.3);
+  background: var(--common-white, #fff);
+  color: var(--gradient1-textContrast);
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.625;
+  text-align: center;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+}
+
+.serviceCard svg { width: 44px; height: 44px; flex-shrink: 0; }
+
+.carouselIndicators { display: flex; align-items: center; gap: 4px; margin-top: 12px; }
+
+.indicator { width: 4px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%); opacity: 0.4; transition: all 0.2s ease; }
+
+.indicatorActive { width: 20px; opacity: 1; }
+
+.loadingSpinner { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+
+.loadingSpinnerSvg { animation: spin 2s linear infinite; transform-origin: center; }
+
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Larger screens */
+@media (min-width: 769px) {
+  .loadingScreen { padding: 40px 24px; }
+  .loadingSection { gap: 60px; padding: 0 32px; }
+  .loadingContent { gap: 24px; }
+  .loadingMainTitle { font-size: clamp(32px, 4.5vw, 48px); }
+  .loadingSubtitle { font-size: 18px; }
+  .loadingDescription { font-size: 18px; }
+  .loadingFeatures { max-width: 480px; }
+}
+
+/* Very large screens tweak */
+@media (min-width: 900px) {
+  .loadingSection { max-width: 740px; }
+}

@@ -1,14 +1,103 @@
+import { useState, useEffect, useRef } from 'react';
+import styles from './LoadingScreen.module.css';
+
 const LoadingScreen = () => {
-  return (
-    <div className="loading-screen">
-      <div className="loading-section">
-        <h1 className="loading-title">
-          We are <span className="gradient-text">drivers of change</span>
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Progress through steps automatically, but stop at step 3 for user interaction
+    const STEP_DURATION = 6500; // 6.5s per step
+    const FADE_DURATION = 300; // 300ms fade transition
+    let step = 1;
+    setCurrentStep(step);
+
+    const progressToNextStep = () => {
+      // Only progress if we haven't reached step 3 yet
+      if (step < 3) {
+        // Start fade out
+        setIsTransitioning(true);
+
+        setTimeout(() => {
+          // Change step during fade
+          step = step + 1;
+          setCurrentStep(step);
+
+          // End fade out, start fade in
+          setTimeout(() => {
+            setIsTransitioning(false);
+
+            // Schedule next progression only if not at final step
+            if (step < 3) {
+              setTimeout(progressToNextStep, STEP_DURATION);
+            }
+          }, FADE_DURATION / 2);
+        }, FADE_DURATION / 2);
+      }
+    };
+
+    // Start the first progression
+    const firstTimeout = setTimeout(progressToNextStep, STEP_DURATION);
+
+    return () => clearTimeout(firstTimeout);
+  }, []);
+
+  // Simple drag-to-scroll support for desktop/tablet (touch works by default)
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDown = true;
+      el.classList.add('dragging');
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    };
+    const onMouseLeave = () => {
+      isDown = false;
+      el.classList.remove('dragging');
+    };
+    const onMouseUp = () => {
+      isDown = false;
+      el.classList.remove('dragging');
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - el.offsetLeft;
+      const walk = (x - startX) * 1; // scroll-fast multiplier
+      el.scrollLeft = scrollLeft - walk;
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('mouseleave', onMouseLeave);
+    el.addEventListener('mouseup', onMouseUp);
+    el.addEventListener('mousemove', onMouseMove);
+
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('mouseleave', onMouseLeave);
+      el.removeEventListener('mouseup', onMouseUp);
+      el.removeEventListener('mousemove', onMouseMove);
+    };
+  }, []);
+
+  const renderStep1 = () => (
+    <>
+      <div className={styles.loadingContent}>
+        <h1 className={styles.loadingMainTitle}>
+          Making Sense<br />
+          Technology for smarter<br />
+          investments.
         </h1>
 
-        <div className="loading-divider">
-          <div className="divider-line"></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
+        <div className={styles.loadingDivider}>
+          <div className={styles.dividerLine}></div>
+          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
             <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
             <defs>
               <linearGradient id="paint0_linear" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
@@ -19,23 +108,221 @@ const LoadingScreen = () => {
           </svg>
         </div>
 
-        <p className="loading-description">
-          At Making Sense, innovation thrives through our commitment to staying at the forefront of technology. We foster an environment where our people are encouraged to explore, experiment, and grow, turning challenges into opportunities to lead and excel.
-        </p>
+        <div className={styles.loadingFeatures}>
+          <div className={styles.featureItem}>
+            <svg width="7" height="8" viewBox="0 0 7 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="3.5" cy="4" r="3.5" fill="url(#paint0_linear_feature)"/>
+              <defs>
+                <linearGradient id="paint0_linear_feature" x1="0.330301" y1="3.07772" x2="2.83856" y2="5.7951" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#1EDD8E"/>
+                  <stop offset="1" stopColor="#53C0D2"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span>20+ years driving digital innovation</span>
+          </div>
+          <div className={styles.featureItem}>
+            <svg width="7" height="8" viewBox="0 0 7 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="3.5" cy="4" r="3.5" fill="url(#paint0_linear_feature2)"/>
+              <defs>
+                <linearGradient id="paint0_linear_feature2" x1="0.330301" y1="3.07772" x2="2.83856" y2="5.7951" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#1EDD8E"/>
+                  <stop offset="1" stopColor="#53C0D2"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span>100+ successful projects</span>
+          </div>
+          <div className={styles.featureItem}>
+            <svg width="7" height="8" viewBox="0 0 7 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="3.5" cy="4" r="3.5" fill="url(#paint0_linear_feature3)"/>
+              <defs>
+                <linearGradient id="paint0_linear_feature3" x1="0.330301" y1="3.07772" x2="2.83856" y2="5.7951" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#1EDD8E"/>
+                  <stop offset="1" stopColor="#53C0D2"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span>Expertise in Private Equity & Portfolio Companies</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
-        <div className="loading-spinner">
-          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  const renderStep2 = () => (
+    <>
+      <div className={styles.loadingContent}>
+        <h1 className={styles.loadingMainTitle}>
+          Making Sense<br />
+          Technology for smarter<br />
+          investments.
+        </h1>
+
+        <div className={styles.loadingDivider}>
+          <div className={styles.dividerLine}></div>
+          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
+            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear_step2)"/>
+            <defs>
+              <linearGradient id="paint0_linear_step2" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#0ECC7E"/>
+                <stop offset="1" stopColor="#53C0D2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className={styles.loadingDescriptionSection}>
+          <h2 className={styles.loadingSubtitle}>From Due Diligence to Value Creation.</h2>
+          <p className={styles.loadingDescription}>
+            We help Private Equity firms and their portfolio companies maximize ROI and accelerate growth through technology.
+          </p>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderStep3 = () => (
+    <>
+      <div className={styles.loadingContent}>
+        <h1 className={styles.loadingMainTitle}>
+          Making Sense<br />
+          Technology for smarter<br />
+          investments.
+        </h1>
+
+        <div className={styles.loadingDivider}>
+          <div className={styles.dividerLine}></div>
+          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
+            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear_step3)"/>
+            <defs>
+              <linearGradient id="paint0_linear_step3" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#0ECC7E"/>
+                <stop offset="1" stopColor="#53C0D2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div className={styles.loadingServicesSection}>
+          <h2 className={styles.loadingSubtitle}>How We Help?</h2>
+          
+          <div className={styles.servicesCarousel} ref={carouselRef}>
+            <div className={styles.serviceCard}>
+              <svg width="48" height="49" viewBox="0 0 48 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M29.6727 24.7827C29.6727 21.6592 27.1426 19.1177 24.033 19.1177C20.9234 19.1177 18.3932 21.6592 18.3932 24.7827C18.3932 27.9062 20.9234 30.4455 24.033 30.4455C25.0688 30.4455 26.0388 30.162 26.873 29.6716L29.4159 33.0104C29.5539 33.1917 29.7619 33.2876 29.9721 33.2876C30.1206 33.2876 30.2692 33.2407 30.3966 33.1426C30.7044 32.906 30.7616 32.4646 30.5282 32.1576L27.9853 28.8166C29.0254 27.789 29.6727 26.3605 29.6727 24.7827ZM19.7962 24.7827C19.7962 22.4353 21.6981 20.5249 24.0351 20.5249C26.3721 20.5249 28.274 22.4353 28.274 24.7827C28.274 27.1301 26.3721 29.0405 24.0351 29.0405C21.6981 29.0405 19.7962 27.1301 19.7962 24.7827ZM14.1523 34.0061V18.4035C14.1523 17.2308 15.1032 16.2757 16.2706 16.2757H19.0937V14.1478C19.0937 12.9752 20.0446 12.02 21.2121 12.02H31.8017C32.9692 12.02 33.9201 12.9752 33.9201 14.1478V35.4218C33.9201 36.5945 32.9692 37.5497 31.8017 37.5497H17.6843C17.2937 37.5497 16.9775 37.232 16.9775 36.8397C16.9775 36.4474 17.2937 36.1297 17.6843 36.1297H31.8017C32.1902 36.1297 32.5086 35.812 32.5086 35.4197V14.15C32.5086 13.7598 32.1923 13.44 31.8038 13.44H21.2142C20.8257 13.44 20.5073 13.7577 20.5073 14.15V16.2778C20.5073 17.0603 19.8748 17.6956 19.0958 17.6956H16.2727C15.8843 17.6956 15.5659 18.0133 15.5659 18.4056V34.0083C15.5659 34.4006 15.2496 34.7182 14.8591 34.7182C14.4685 34.7182 14.1523 34.4006 14.1523 34.0083V34.0061ZM14.3093 37.394C14.1629 37.2469 14.0801 37.0465 14.0801 36.8418C14.0801 36.7928 14.0843 36.7395 14.095 36.6904C14.1077 36.6414 14.1204 36.5902 14.1395 36.5433C14.1607 36.4964 14.1841 36.4516 14.2117 36.409C14.2393 36.3663 14.2711 36.3258 14.3072 36.2917C14.5938 36.0018 15.1159 36.0018 15.4046 36.2917C15.4428 36.328 15.4725 36.3685 15.5001 36.409C15.5277 36.4516 15.5532 36.4964 15.5723 36.5433C15.5914 36.5902 15.6062 36.6393 15.6168 36.6904C15.6253 36.7395 15.6317 36.7928 15.6317 36.8418C15.6317 37.0465 15.5489 37.249 15.4025 37.394C15.3664 37.4303 15.3282 37.4622 15.2857 37.49C15.2433 37.5177 15.1987 37.5411 15.152 37.5603C15.1053 37.5795 15.0586 37.5966 15.0077 37.6051C14.9567 37.6136 14.9058 37.62 14.8549 37.62C14.8039 37.62 14.7529 37.6158 14.7041 37.6051C14.6553 37.5944 14.6044 37.5795 14.5577 37.5603C14.511 37.5411 14.4664 37.5177 14.424 37.49C14.3815 37.4622 14.3412 37.4281 14.3072 37.394H14.3093Z" fill="url(#paint0_linear_tech_dd)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_tech_dd" x1="17.1303" y1="17.0304" x2="33.6004" y2="36.5627" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.22" stopColor="#00CB78"/>
+                    <stop offset="0.83" stopColor="#00C3D0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>Technology Due Diligence</span>
+            </div>
+
+            <div className={styles.serviceCard}>
+              <svg width="24" height="26" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23.2968 2.12281V15.6937C23.2968 16.8152 22.3838 17.7303 21.2602 17.7303H12.4393V23.8379H17.1892C17.5637 23.8379 17.868 24.1422 17.868 24.5167C17.868 24.8913 17.5637 25.1956 17.1892 25.1956H6.33376C5.95921 25.1956 5.65489 24.8913 5.65489 24.5167C5.65489 24.1422 5.95921 23.8379 6.33376 23.8379H11.0837V17.7303H2.26271C1.14121 17.7303 0.226127 16.8173 0.226127 15.6937V3.48054C0.226127 3.10599 0.530445 2.80168 0.904989 2.80168C1.27953 2.80168 1.58385 3.10599 1.58385 3.48054V15.6937C1.58385 16.0682 1.88817 16.3725 2.26271 16.3725H21.2623C21.6369 16.3725 21.9412 16.0682 21.9412 15.6937V2.12281C21.9412 1.74827 21.6369 1.44395 21.2623 1.44395H3.62044C3.24589 1.44395 2.94157 1.13963 2.94157 0.765091C2.94157 0.390546 3.24589 0.0862288 3.62044 0.0862288H21.2623C22.3838 0.0862288 23.2989 0.999181 23.2989 2.12281H23.2968ZM0.907117 1.51205C1.1029 1.51205 1.29656 1.43331 1.43488 1.29499C1.57321 1.15453 1.65408 0.963003 1.65408 0.765091C1.65408 0.567178 1.57321 0.375649 1.43488 0.237323C1.26038 0.0649479 1.00075 -0.0159197 0.760279 0.0351546C0.713461 0.0436669 0.664514 0.0585636 0.619824 0.0777164C0.577263 0.0968693 0.532573 0.11815 0.490011 0.145815C0.449577 0.173481 0.413399 0.205402 0.377222 0.239452C0.238896 0.375649 0.160156 0.569306 0.160156 0.765091C0.160156 0.960875 0.238896 1.15453 0.377222 1.29499C0.517676 1.43331 0.709204 1.51205 0.907117 1.51205ZM18.217 10.9438C18.3724 10.682 18.3383 10.3543 18.134 10.1287L17.1402 9.03486L17.1125 9.00507L17.0934 8.98379V8.59647L17.1125 8.57519L17.1402 8.5454L18.134 7.44943C18.3383 7.22385 18.3724 6.89613 18.217 6.63437L16.8827 4.37646C16.7593 4.16791 16.5316 4.0381 16.2847 4.0381C16.24 4.0381 16.1953 4.04235 16.1528 4.05087L14.6993 4.34029L14.6589 4.3488L14.6312 4.35518L14.6057 4.34029L14.5695 4.31901C14.4801 4.26368 14.3865 4.2126 14.2928 4.16366L14.2545 4.1445L14.229 4.13173L14.2205 4.10407L14.2077 4.06363L13.7438 2.70378C13.648 2.425 13.3863 2.23773 13.0905 2.23773H10.4218C10.126 2.23773 9.86426 2.425 9.7685 2.70591L9.30457 4.06576L9.2918 4.1062L9.28329 4.13386L9.25776 4.14663L9.21945 4.16578C9.12581 4.21473 9.03431 4.26793 8.9428 4.32113L8.90662 4.34242L8.88108 4.35731L8.85342 4.35093L8.81298 4.34242L7.3595 4.05299C7.31906 4.04448 7.2765 4.04023 7.23394 4.04023C6.98708 4.04023 6.75086 4.17217 6.62956 4.37859L5.29525 6.6365C5.13989 6.89826 5.17394 7.22598 5.37824 7.45156L6.37206 8.5454L6.39973 8.57519L6.41888 8.59647V8.98379L6.39973 9.00507L6.37206 9.03486L5.37824 10.1308C5.17394 10.3564 5.13989 10.6841 5.29525 10.9459L6.62956 13.2038C6.75299 13.4123 6.9807 13.5422 7.22543 13.5422C7.27012 13.5422 7.31481 13.5379 7.3595 13.5294L8.81298 13.24L8.85342 13.2315L8.88108 13.2251L8.90662 13.24L8.9428 13.2613C9.03218 13.3166 9.12581 13.3677 9.21945 13.4187L9.25776 13.4379L9.28329 13.4507L9.2918 13.4783L9.30457 13.5188L9.7685 14.8786C9.86426 15.1574 10.126 15.3468 10.4218 15.3468H13.0905C13.3863 15.3468 13.648 15.1595 13.7438 14.8786L14.2077 13.5188L14.2205 13.4783L14.229 13.4507L14.2545 13.4379L14.2928 13.4187C14.3865 13.3677 14.4801 13.3166 14.5695 13.2613L14.6057 13.24L14.6312 13.2251L14.6589 13.2315L14.6993 13.24L16.1528 13.5294C16.1953 13.5379 16.2379 13.5422 16.2805 13.5422C16.5252 13.5422 16.7614 13.4102 16.8827 13.2038L18.217 10.9459V10.9438ZM15.891 9.7116L16.6805 10.5799L16.7337 10.6373L16.7699 10.6777L16.7423 10.7246L16.7018 10.7927L16.0102 11.9652L15.9719 12.0312L15.9442 12.0759L15.8932 12.0653L15.8187 12.0504L14.6248 11.812C14.5801 11.8035 14.5354 11.7993 14.4886 11.7993C14.346 11.7993 14.2056 11.8439 14.0907 11.9248C13.8715 12.0802 13.6374 12.2121 13.3948 12.3185C13.2181 12.3972 13.0819 12.5462 13.0202 12.7271L12.6393 13.8401L12.6138 13.9125L12.5967 13.9635H10.9177L10.9006 13.9125L10.8751 13.8401L10.4942 12.725C10.4325 12.542 10.2963 12.393 10.1196 12.3164C9.87703 12.21 9.64294 12.0759 9.42375 11.9227C9.3067 11.8397 9.16838 11.7971 9.02579 11.7971C8.9811 11.7971 8.93429 11.8014 8.8896 11.8099L7.69573 12.0482L7.62125 12.0631L7.57018 12.0738L7.54251 12.0291L7.50421 11.9631L6.81045 10.7905L6.77001 10.7224L6.74235 10.6756L6.77853 10.6352L6.83173 10.5777L7.62125 9.70947C7.73617 9.58178 7.80001 9.41792 7.80001 9.24554V8.32621C7.80001 8.15383 7.73617 7.98997 7.62125 7.86228L6.83173 6.99402L6.77853 6.93656L6.74235 6.89613L6.77001 6.84931L6.81045 6.78121L7.50421 5.60863L7.54251 5.54479L7.57018 5.5001L7.62125 5.51074L7.69573 5.52564L8.89172 5.76398C8.93641 5.77249 8.9811 5.77675 9.02579 5.77675C9.16838 5.77675 9.30883 5.73206 9.42375 5.65119C9.64081 5.49797 9.8749 5.36603 10.1196 5.2575C10.2963 5.18088 10.4325 5.03192 10.4942 4.8489L10.8751 3.73591L10.8985 3.66355L10.9155 3.61248H12.5946L12.6116 3.66355L12.6372 3.73591L13.0181 4.85103C13.0798 5.03192 13.2181 5.18088 13.3926 5.25962C13.6374 5.36816 13.8715 5.5001 14.0885 5.65332C14.2034 5.73419 14.346 5.77888 14.4886 5.77888C14.5333 5.77888 14.578 5.77462 14.6206 5.76611L15.8187 5.52776L15.8932 5.51287L15.9442 5.50223L15.9719 5.54692L16.0102 5.61289L16.7018 6.78547L16.7423 6.85357 L16.7699 6.90038L16.7337 6.94082L16.6805 6.99828L15.891 7.86654C15.7761 7.99422 15.7123 8.15809 15.7123 8.33046V9.2498C15.7123 9.42217 15.7761 9.58604 15.891 9.71372V9.7116ZM12.3392 9.3711C12.4925 9.21788 12.5818 9.00507 12.5818 8.79013C12.5818 8.57519 12.4946 8.36026 12.3414 8.20703C12.2009 8.06658 11.9902 7.98571 11.7583 7.98571C11.5263 7.98571 11.3156 8.06658 11.1752 8.20703C11.0241 8.36238 10.9368 8.57306 10.9368 8.79013C10.9368 9.0072 11.0283 9.22001 11.1922 9.38812C11.205 9.39877 11.2475 9.4392 11.3007 9.47325C11.3433 9.50304 11.3922 9.52858 11.4433 9.54986C11.4965 9.57327 11.5476 9.58817 11.5987 9.59881C11.654 9.60945 11.7051 9.6137 11.7583 9.6137C11.8115 9.6137 11.8647 9.60945 11.9157 9.59881C11.9647 9.59029 12.0158 9.57327 12.0711 9.55199C12.1222 9.53071 12.169 9.5073 12.2137 9.4775C12.2584 9.44771 12.3009 9.41366 12.3392 9.37536V9.3711Z" fill="url(#paint0_linear_tech_maturity)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_tech_maturity" x1="3.69066" y1="3.1826" x2="20.7856" y2="18.773" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.22" stopColor="#00CB78"/>
+                    <stop offset="0.83" stopColor="#00C3D0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>Tech Maturity Assessment</span>
+            </div>
+
+            <div className={styles.serviceCard}>
+              <svg width="48" height="49" viewBox="0 0 48 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M34.2703 16.8202H27.8932V15.8218C27.8932 14.7849 27.0483 13.94 26.0114 13.94H21.1961C20.1592 13.94 19.3164 14.7828 19.3164 15.8196V16.8181H12.9394C11.9025 16.8181 11.0598 17.6609 11.0598 18.6978V22.7877C11.0598 23.2123 11.4054 23.56 11.8321 23.56C12.2588 23.56 12.6044 23.2144 12.6044 22.7877V18.6978C12.6044 18.5121 12.7559 18.3607 12.9415 18.3607H34.2724C34.458 18.3607 34.6095 18.5121 34.6095 18.6978V32.6893C34.6095 32.8749 34.458 33.0264 34.2724 33.0264H12.9415C12.7559 33.0264 12.6044 32.8749 12.6044 32.6893V28.2922C12.6044 27.8676 12.2588 27.5198 11.8321 27.5198C11.4054 27.5198 11.0598 27.8655 11.0598 28.2922V32.6872C11.0598 33.7241 11.9046 34.569 12.9415 34.569H34.2724C35.3093 34.569 36.152 33.7262 36.152 32.6893V18.6978C36.152 17.6609 35.3072 16.816 34.2703 16.816V16.8202ZM26.3507 16.8202H20.859V15.8218C20.859 15.6362 21.0105 15.4847 21.1961 15.4847H26.0136C26.1992 15.4847 26.3507 15.6362 26.3507 15.8218V16.8202ZM11.5377 26.2653C11.5846 26.2845 11.6337 26.2995 11.6806 26.3101C11.7318 26.3187 11.7809 26.3251 11.8299 26.3251C12.0326 26.3251 12.2311 26.244 12.374 26.101C12.517 25.9581 12.6001 25.7576 12.6001 25.5549C12.6001 25.4994 12.5938 25.4482 12.5831 25.3991C12.5746 25.3522 12.5575 25.301 12.5383 25.2562C12.5212 25.2156 12.4977 25.1687 12.47 25.1282C12.4423 25.0855 12.4103 25.0471 12.374 25.0108C12.2353 24.8721 12.0369 24.7932 11.8278 24.7932C11.6187 24.7932 11.4203 24.8721 11.2816 25.0108C11.1387 25.1559 11.0576 25.3543 11.0576 25.5549C11.0576 25.7554 11.1387 25.956 11.2816 26.101C11.3179 26.1352 11.3563 26.1693 11.4054 26.1992C11.4374 26.2227 11.4843 26.2461 11.5377 26.2675V26.2653Z" fill="url(#paint0_linear_post_ma)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_post_ma" x1="11.1856" y1="20.1869" x2="34.1209" y2="30.3638" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.22" stopColor="#00CB78"/>
+                    <stop offset="0.83" stopColor="#00C3D0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>Post-M&A Integrations</span>
+            </div>
+
+            <div className={styles.serviceCard}>
+              <svg width="48" height="49" viewBox="0 0 48 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M25.202 26.9487C25.3431 27.0888 25.4266 27.282 25.4266 27.4815C25.4266 27.681 25.3431 27.8741 25.202 28.0163C25.0608 28.1564 24.8661 28.2349 24.665 28.2349C24.4639 28.2349 24.2693 28.1543 24.1259 28.0163C23.9847 27.8741 23.9056 27.6789 23.9056 27.4815C23.9056 27.2841 23.9869 27.0888 24.1259 26.9487C24.4104 26.6665 24.9196 26.6665 25.202 26.9487ZM37.1174 27.8253C37.1174 30.2852 35.1001 32.2867 32.6208 32.2867H18.4378C14.6235 32.2867 11.5195 29.2091 11.5195 25.4227C11.5195 21.6363 14.6235 18.5588 18.4378 18.5588C18.7137 18.5588 18.9918 18.5757 19.2721 18.6097C20.7481 17.2471 22.6563 16.5 24.6864 16.5C28.7338 16.5 32.0688 19.4608 32.5737 23.3661C35.0809 23.3427 37.1195 25.3505 37.1195 27.8274L37.1174 27.8253ZM35.7333 27.8253C35.7333 26.1231 34.3364 24.7372 32.6208 24.7372C32.4432 24.7372 32.2614 24.7541 32.0646 24.7902C31.8678 24.8263 31.6645 24.7754 31.5084 24.6501C31.3522 24.5249 31.2581 24.3403 31.2495 24.1408C31.1147 20.626 28.2311 17.8732 24.6843 17.8732C23.328 17.8732 22.0381 18.2765 20.9492 19.0278C22.8018 19.7431 24.2842 21.233 24.9624 23.1368C25.1378 23.6293 25.2576 24.1429 25.3153 24.6629C25.3581 25.0407 25.0843 25.3781 24.7035 25.4206C24.3249 25.463 23.9826 25.1914 23.9398 24.8136C23.8928 24.3976 23.7986 23.988 23.6574 23.5932C22.9921 21.7276 21.3599 20.3565 19.4004 20.0169C19.394 20.0169 19.3876 20.0169 19.3833 20.0148C19.0667 19.9617 18.7501 19.9341 18.4399 19.9341C15.3872 19.9341 12.9036 22.3982 12.9036 25.427C12.9036 28.4557 15.3872 30.9198 18.4399 30.9198H32.6229C34.3385 30.9198 35.7355 29.5317 35.7355 27.8296L35.7333 27.8253Z" fill="url(#paint0_linear_cloud)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_cloud" x1="13.2138" y1="20.6345" x2="36.5187" y2="31.148" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.22" stopColor="#00CB78"/>
+                    <stop offset="0.83" stopColor="#00C3D0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>Cloud Migration & Modernization</span>
+            </div>
+
+            <div className={styles.serviceCard}>
+              <svg width="48" height="49" viewBox="0 0 48 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24.9718 13.4223C24.9718 13.6213 24.8894 13.8162 24.7478 13.9601C24.714 13.994 24.6738 14.0279 24.6337 14.0554C24.5935 14.083 24.5513 14.1041 24.5048 14.1232C24.4583 14.1423 24.4097 14.1592 24.3611 14.1677C24.321 14.1761 24.2808 14.1783 24.2407 14.1783C24.2301 14.1783 24.2217 14.1804 24.2111 14.1804C24.1583 14.1804 24.1076 14.1761 24.059 14.1655C24.0188 14.1571 23.9723 14.1423 23.9174 14.1211C23.8561 14.0957 23.8181 14.0745 23.7906 14.0533C23.7462 14.0237 23.704 13.9877 23.6744 13.9601C23.5328 13.8162 23.4525 13.6192 23.4525 13.4202C23.4525 13.2211 23.5328 13.0221 23.6723 12.8802C23.8033 12.7489 23.9998 12.6727 24.2111 12.6727C24.2217 12.6727 24.2301 12.6748 24.2407 12.6748C24.4393 12.6811 24.621 12.7531 24.7478 12.8802C24.8894 13.0221 24.9718 13.219 24.9718 13.4202V13.4223ZM23.2772 36.9694C23.3173 36.9694 23.3575 36.9651 23.3955 36.9588C23.4441 36.9503 23.4927 36.9334 23.5392 36.9143C23.5835 36.8974 23.6258 36.8741 23.6659 36.8466C23.7061 36.819 23.7462 36.7873 23.7801 36.7534C23.9216 36.6115 24.0019 36.4167 24.0019 36.2198C24.0019 36.0228 23.9216 35.8238 23.7801 35.6819C23.6554 35.557 23.4737 35.485 23.2772 35.4765V35.4723H21.1917L21.1029 35.2097L20.2387 32.6687C20.1711 32.4696 20.0232 32.3066 19.8309 32.224C19.3217 31.9995 18.8336 31.7242 18.3793 31.4024C18.2525 31.3113 18.1025 31.2647 17.9461 31.2647C17.8975 31.2647 17.8489 31.269 17.8003 31.2795L15.0957 31.8216L14.8253 31.8767L14.6858 31.6395L12.9341 28.6707L12.7883 28.423L12.9806 28.2112L14.7851 26.2186C14.9098 26.081 14.9795 25.901 14.9795 25.7125V23.9253C14.9795 23.739 14.9098 23.559 14.7851 23.4192L12.9806 21.4266L12.7883 21.2149L12.9341 20.9671L14.6858 17.9962L14.8253 17.759L15.0957 17.8141L17.8003 18.3562C17.8489 18.3668 17.8975 18.371 17.9482 18.371C18.1046 18.371 18.2546 18.3244 18.3814 18.2334C18.8357 17.9115 19.3238 17.6362 19.833 17.4117C20.0253 17.327 20.1732 17.164 20.2408 16.9671L21.105 14.426L21.1938 14.1634H22.0707V14.155C22.1108 14.155 22.1509 14.1507 22.189 14.1444C22.2376 14.1359 22.2862 14.119 22.3327 14.0999C22.377 14.083 22.4193 14.0597 22.4594 14.0321C22.4996 14.0046 22.5397 13.9729 22.5735 13.939C22.7151 13.7971 22.7954 13.6023 22.7954 13.4053C22.7954 13.2084 22.7151 13.0094 22.5735 12.8675C22.4489 12.7426 22.2672 12.6706 22.0707 12.6621L20.6571 12.66C20.3359 12.66 20.0506 12.8654 19.9471 13.1682L18.9751 16.0248L18.9244 16.1751L18.7829 16.2471C18.487 16.3953 18.1955 16.5605 17.9165 16.7384L17.7855 16.8209L17.6334 16.7913L14.5992 16.1836C14.5506 16.173 14.4999 16.1687 14.4513 16.1687C14.1871 16.1687 13.9399 16.3106 13.8068 16.5393L11.2142 20.9269C11.0451 21.2127 11.0811 21.5685 11.305 21.8141L13.3779 24.1032L13.4793 24.2133V25.4203L13.3779 25.5304L11.305 27.8216C11.0832 28.0672 11.0472 28.4251 11.2142 28.7088L13.8026 33.1006C13.9378 33.3293 14.185 33.4712 14.4491 33.4712C14.4977 33.4712 14.5485 33.467 14.5971 33.4564L17.6292 32.8486L17.7813 32.819L17.9123 32.9016C18.1912 33.0795 18.4828 33.2446 18.7786 33.3929L18.9202 33.4648L18.9709 33.6152L19.9429 36.4718C20.0464 36.7767 20.3317 36.98 20.6528 36.98M20.1098 21.6722C20.1098 21.3207 20.3929 21.037 20.7437 21.037H24.2893L26.7467 18.5743C26.2311 18.0449 25.912 17.3207 25.912 16.5245C25.912 14.9046 27.2284 13.5853 28.8449 13.5853C30.4613 13.5853 31.7777 14.9046 31.7777 16.5245C31.7777 18.1444 30.4613 19.4636 28.8449 19.4636C28.4878 19.4636 28.1455 19.3959 27.8285 19.2773C27.8116 19.2985 27.7968 19.3197 27.7778 19.3387L24.9971 22.1254C24.8725 22.2503 24.7119 22.3117 24.5492 22.3117C24.5323 22.3117 24.5133 22.3075 24.4963 22.3075C24.4942 22.3075 24.4921 22.3075 24.49 22.3075H20.7458C20.3951 22.3075 20.1119 22.0238 20.1119 21.6722H20.1098ZM27.1777 16.5245C27.1777 17.4435 27.9257 18.1931 28.8427 18.1931C29.7598 18.1931 30.5078 17.4435 30.5078 16.5245C30.5078 15.6055 29.7598 14.8559 28.8427 14.8559C27.9257 14.8559 27.1777 15.6055 27.1777 16.5245ZM31.7777 33.0159C31.7777 34.6359 30.4613 35.9551 28.8449 35.9551C27.2284 35.9551 25.912 34.6359 25.912 33.0159C25.912 32.2197 26.2311 31.4955 26.7467 30.9661L24.2893 28.5034H20.7437C20.3929 28.5034 20.1098 28.2197 20.1098 27.8682C20.1098 27.5167 20.3929 27.2329 20.7437 27.2329H24.4879C24.4879 27.2329 24.4921 27.2329 24.4942 27.2329C24.6738 27.2181 24.8577 27.2753 24.995 27.4129L27.7757 30.1996C27.7947 30.2187 27.8095 30.2398 27.8264 30.261C28.1433 30.1424 28.4857 30.0747 28.8449 30.0747C30.4613 30.0747 31.7777 31.3939 31.7777 33.0138V33.0159ZM30.5099 33.0159C30.5099 32.0948 29.7619 31.3473 28.8449 31.3473C27.9278 31.3473 27.1798 32.0969 27.1798 33.0159C27.1798 33.9349 27.9278 34.6846 28.8449 34.6846C29.7619 34.6846 30.5099 33.9349 30.5099 33.0159ZM35.8916 24.7702C35.8916 26.3901 34.5753 27.7094 32.9588 27.7094C31.579 27.7094 30.4233 26.748 30.1105 25.4605H20.6169C20.2662 25.4605 19.983 25.1768 19.983 24.8253C19.983 24.4738 20.2662 24.19 20.6169 24.19H30.0831C30.3535 22.8454 31.5389 21.8311 32.9588 21.8311C34.5753 21.8311 35.8916 23.1503 35.8916 24.7702ZM34.6238 24.7702C34.6238 23.8491 33.8759 23.1016 32.9588 23.1016C32.0418 23.1016 31.2938 23.8512 31.2938 24.7702C31.2938 25.6892 32.0418 26.4388 32.9588 26.4388C33.8759 26.4388 34.6238 25.6892 34.6238 24.7702Z" fill="url(#paint0_linear_digital_transformation)"/>
+                <defs>
+                  <linearGradient id="paint0_linear_digital_transformation" x1="11.0388" y1="15.4128" x2="36.4776" y2="34.1535" gradientUnits="userSpaceOnUse">
+                    <stop offset="0.22" stopColor="#00CB78"/>
+                    <stop offset="0.83" stopColor="#00C3D0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span>Digital Transformation & Enablement</span>
+            </div>
+          </div>
+
+          <div className={styles.carouselIndicators}>
+            <div className={`${styles.indicator} ${styles.indicatorActive}` }></div>
+            <div className={styles.indicator}></div>
+            <div className={styles.indicator}></div>
+            <div className={styles.indicator}></div>
+            <div className={styles.indicator}></div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className={styles.loadingScreen}>
+      <div className={styles.loadingSection}>
+        {/* Static title block: stays fixed while content below animates */}
+        <div className={styles.loadingContent}>
+          <h1 className={styles.loadingMainTitle}>
+            Making Sense<br />
+            Technology for smarter<br />
+            investments.
+          </h1>
+
+          <div className={styles.loadingDivider}>
+            <div className={styles.dividerLine}></div>
+            <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
+              <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear_static)"/>
+              <defs>
+                <linearGradient id="paint0_linear_static" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#0ECC7E"/>
+                  <stop offset="1" stopColor="#53C0D2"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <div className={`${styles.loadingContentWrapper} ${isTransitioning ? styles.fadeOut : styles.fadeIn}`}>
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </div>
+
+        <div className={styles.loadingSpinner}>
+          <svg className={styles.loadingSpinnerSvg} width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clipPath="url(#clipPath)">
               <g transform="matrix(0.028 0 0 0.028 28 28)">
                 <foreignObject x="-1035.71" y="-1035.71" width="2071.43" height="2071.43">
-                  <div
-                    style={{
-                      background: 'conic-gradient(from 90deg, rgba(14, 204, 126, 1) 0deg, rgba(83, 192, 210, 0) 360deg)',
-                      height: '100%',
-                      width: '100%',
-                      opacity: 1,
-                    }}
-                  />
+                  <div className="spinner-conic" />
                 </foreignObject>
               </g>
             </g>

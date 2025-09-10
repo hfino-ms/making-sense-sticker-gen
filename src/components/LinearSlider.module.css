@@ -1,0 +1,319 @@
+/* Linear slider matching Figma design exactly */
+.container {
+  display: flex;
+  width: 673.295px;
+  max-width: 100%;
+  padding: 0 28.727px 32px 28.727px;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.percentage {
+  display: flex;
+  width: auto; /* flexible width so percentage never clips */
+  min-width: 48px;
+  height: auto;
+  padding: 4px 8px;
+  flex-direction: column;
+  justify-content: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 44px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 36px; /* 81.818% */
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+
+.label {
+  color: #111210;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-transform: uppercase;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+}
+
+.sliderContainer {
+  width: 616px;
+  height: 50.286px;
+  aspect-ratio: 49/4;
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: visible; /* allow thumb to be visible and clickable outside the track bounds */
+  touch-action: pan-x; /* prioritize horizontal pans to avoid vertical scrolling while dragging */
+}
+
+/* Blur track behind */
+.trackBlur {
+  width: 100%;
+  height: 7px;
+  flex-shrink: 0;
+  opacity: 0.1;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  filter: blur(10px);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* White background track */
+.trackWhite {
+  width: 100%;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #FFF;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Filled gradient track */
+.trackFilled {
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 3.591px;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--filled-width, 10%);
+  min-width: 63px; /* Minimum width as shown in Figma */
+  transition: width 200ms ease;
+  pointer-events: none;
+}
+
+/* Thumb glow effect */
+.sliderThumbGlow {
+  position: absolute;
+  left: var(--thumb-position, 0%);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  fill-opacity: 0.5;
+  pointer-events: none;
+  transition: left 200ms ease;
+  z-index: 1;
+}
+
+/* Main thumb handle */
+.sliderThumb {
+  position: absolute;
+  left: var(--thumb-position, 0%);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #F9F9F9;
+  cursor: pointer;
+  transition: left 200ms ease;
+  z-index: 10;
+  /* Drop shadow as specified in Figma */
+  filter: drop-shadow(0 10.7727px 21.5455px rgba(0, 0, 0, 0.1)) drop-shadow(0 0.897727px 7.18182px rgba(0, 0, 0, 0.1));
+  pointer-events: none; /* let the invisible input capture interactions */
+}
+
+/* Hidden input for interaction */
+.input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2; /* keep input present for keyboard/a11y but allow container to handle touch/pointer */
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: pan-x; /* make horizontal dragging smoother on touch devices */
+  pointer-events: none; /* let the container capture touch/pointer events for consistent behavior */
+}
+
+.input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input::-moz-range-thumb {
+  border: none;
+  background: transparent;
+}
+
+/* Labels section */
+.labels {
+  display: flex;
+  width: 616px;
+  max-width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0 auto;
+}
+
+.labelItem {
+  color: #757575;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 18px; /* 128.571% */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    max-width: 500px;
+    padding: 0 20px 24px 20px;
+    gap: 20px;
+  }
+  
+  .percentage {
+    font-size: 36px;
+    line-height: 30px;
+    width: auto;
+    height: auto;
+  }
+  
+  .label {
+    font-size: 14px;
+  }
+  
+  .sliderContainer {
+    width: 100%;
+    max-width: 460px;
+    height: 45px;
+  }
+  
+  .sliderThumb {
+    width: 36px;
+    height: 36px;
+    /* keep centered */
+  }
+  
+  .sliderThumbGlow {
+    width: 60px;
+    height: 60px;
+    /* keep centered */
+  }
+  
+  .trackFilled {
+    min-width: 50px;
+  }
+  
+  .labels {
+    max-width: 460px;
+  }
+  
+  .labelItem {
+    font-size: 12px;
+    line-height: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: 100%;
+    max-width: 400px;
+    padding: 0 16px 20px 16px;
+    gap: 16px;
+  }
+  
+  .percentage {
+    font-size: 32px;
+    line-height: 28px;
+  }
+  
+  .label {
+    font-size: 13px;
+  }
+  
+  .sliderContainer {
+    width: 100%;
+    max-width: 360px;
+    height: 40px;
+  }
+  
+  .sliderThumb {
+    width: 32px;
+    height: 32px;
+    /* keep centered */
+  }
+  
+  .sliderThumbGlow {
+    width: 50px;
+    height: 50px;
+    /* keep centered */
+  }
+  
+  .trackFilled {
+    min-width: 40px;
+  }
+  
+  .labels {
+    max-width: 360px;
+  }
+  
+  .labelItem {
+    font-size: 11px;
+    line-height: 14px;
+  }
+}
+
+/* Ensure no overflow on larger screens */
+@media (min-width: 769px) {
+  .container {
+    width: 673.295px;
+    padding: 0 28.727px 32px 28.727px;
+  }
+  
+  .sliderContainer {
+    width: 616px;
+    height: 50.286px;
+  }
+  
+  .labels {
+    width: 616px;
+  }
+}
