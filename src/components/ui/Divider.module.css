@@ -1,0 +1,24 @@
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  justify-content: center;
+  width: 49px;
+  height: 4px;
+  margin: 0 auto;
+}
+
+.dividerLine {
+  width: 42px;
+  height: 4px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
+}
+
+.dividerDot {
+  width: 4px;
+  height: 4px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}

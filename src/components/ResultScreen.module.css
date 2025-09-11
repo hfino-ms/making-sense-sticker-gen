@@ -1,33 +1,56 @@
+/* Result Screen - Figma Design Implementation */
 .resultContainer {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 20px;
-  box-sizing: border-box;
+  width: 100%;
+  background: transparent;
+  position: relative;
 }
 
+/* Main Section */
 .resultSection {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  text-align: center;
+  flex: 1;
+  width: 100%;
+  padding: 120px 24px 40px; /* reduced top padding to remove large gap above title */
+  gap: 60px; /* smaller vertical spacing between sections */
+  box-sizing: border-box;
+}
+
+/* Hero Section */
+.heroSection {
+  display: flex;
   width: 100%;
   max-width: 690px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 60px;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 40px;
-  padding-top: 24px;
-  padding-bottom: 60px;
+  width: 100%;
 }
 
 .resultTitle {
   margin: 0;
-  color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 52px;
+  color: #111210;
   text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 52px; /* 108.333% */
+  width: 100%;
 }
 
 .resultDivider {
@@ -43,7 +66,7 @@
   width: 42px;
   height: 4px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
 }
 
 .dividerDot {
@@ -52,89 +75,43 @@
   border-radius: 4px;
 }
 
-.resultDescription {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
+.personalityDescription {
   width: 100%;
-}
-
-.resultLine1 {
-  margin: 0;
-  color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 400;
-  line-height: 22px;
+  max-width: 660px;
+  color: #111210;
   text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  line-height: 22px;
 }
 
-.resultLine2 {
-  margin: 0;
-  color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
-  font-size: 18px;
+.bold {
   font-weight: 700;
-  line-height: 22px;
-  text-align: center;
 }
 
-.resultProviderError {
-  font-size: 12px;
-  color: rgba(255, 165, 0, 0.8);
-  margin: 8px 0;
+.regular {
+  font-weight: 400;
 }
 
-.archetypeLabel {
-  position: absolute;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  pointer-events: none;
-  z-index: 5;
-  opacity: 0;
-}
-
-/* Simple sticker container - follows Figma design exactly */
+/* Sticker Container */
 .stickerContainer {
   position: relative;
-  width: 340px;
-  height: 340px;
+  width: 280px;
+  height: 280px;
   flex-shrink: 0;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Inner area where the actual sticker image is drawn. This provides padding so the
-   sticker never overlaps the decorative frame, and guarantees the same visual
-   container whether an image is present or not. */
-.stickerInner {
-  position: relative;
-  width: calc(100% - 32px);
-  height: calc(100% - 32px);
-  background: #fff; /* keep white background for printable stickers */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 6px;
-  z-index: 1;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  aspect-ratio: 1/1;
 }
 
 .stickerImage {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* ensure whole sticker fits inside the frame */
+  object-fit: contain;
   display: block;
 }
 
@@ -143,137 +120,168 @@
   height: 80%;
   background: linear-gradient(180deg, #f2f6f5 0%, #eaf3f2 100%);
   border-radius: 4px;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.04);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.frameOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  z-index: 3;
-  image-rendering: auto; /* prefer smooth scaling */
-  will-change: transform; /* hint to browser for smoother compositing */
-}
-
-.resultButtons {
+/* CTAs Section */
+.ctaSection {
   display: flex;
-  align-items: flex-start;
-  gap: 24px;
+  flex-direction: column; /* stack vertically: print then start over */
+  align-items: center;
+  gap: 16px;
 }
 
-.resultButtonIcon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
+.printButton {
+  display: flex;
+  width: 171px;
+  height: 54px;
+  padding: 0 24px;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  border-radius: 40px;
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
+  box-shadow: 0 4px 40px 0 rgba(0, 0, 0, 0.1);
+  border: none;
+  color: #111210;
+  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 20px; /* 125% */
+  text-align: center;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
+.printButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 50px 0 rgba(0, 0, 0, 0.15);
+}
+
+.printButton:active {
+  transform: translateY(0);
+}
+
+/* Start Over Section */
 .startOverSection {
-  margin-top: 20px;
+  position: static; /* participate in normal flow */
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
-.resultEmail {
-  /* Reserved for email input if needed */
+.startOverButton {
+  display: inline-flex;
+  height: auto;
+  padding: 8px 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  box-shadow: none;
+  background: transparent;
+  border: none;
+  color: #9274f4;
+  text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 20px; /* 125% */
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  cursor: pointer;
+  transition: color 180ms ease;
 }
 
-/* Responsive adjustments */
+.startOverButton:hover {
+  color: #6f42f5;
+  transform: none;
+  box-shadow: 0 4px 40px 0 rgba(0, 0, 0, 0.1);
+}
+
+.resultProviderError {
+  font-size: 12px;
+  color: rgba(255, 165, 0, 0.8);
+  margin: 8px 0;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
+  .resultSection {
+    padding: 120px 16px 40px;
+    gap: 120px;
+  }
+
   .resultTitle {
     font-size: 32px;
     line-height: 36px;
   }
-  
-  .resultLine1,
-  .resultLine2 {
+
+  .personalityDescription {
     font-size: 16px;
     line-height: 20px;
   }
-  
+
   .stickerContainer {
-    width: 280px;
-    height: 280px;
+    width: 240px;
+    height: 240px;
+  }
+
+  .printButton {
+    width: 150px;
   }
 }
 
 @media (max-width: 480px) {
   .resultSection {
-    gap: 32px;
-    padding-top: 16px;
+    padding: 80px 16px 40px;
+    gap: 80px;
   }
-  
+
+  .heroContent {
+    gap: 32px;
+  }
+
   .resultTitle {
     font-size: 28px;
     line-height: 32px;
   }
-  
+
+  .personalityDescription {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
   .stickerContainer {
-    width: 260px;
-    height: 260px;
+    width: 200px;
+    height: 200px;
+  }
+
+  .printButton {
+    width: 130px;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .startOverSection {
+    bottom: 40px;
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Preview UI for composed file */
-.filePreviewContainer {
-  width: 100%;
-  margin-top: 20px;
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.filePreviewImageWrapper {
-  width: 340px;
-  height: 340px;
-  background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.filePreviewImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-.filePreviewPlaceholder {
-  color: #777;
-  font-size: 14px;
-}
-
-.previewActions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
-}
-
-.previewButton {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(0,0,0,0.08);
-  background: #fff;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-@media (max-width: 480px) {
-  .filePreviewImageWrapper {
-    width: 260px;
-    height: 260px;
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

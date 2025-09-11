@@ -1,19 +1,16 @@
 /* Mobile-first loading screen styles for LoadingScreen component */
 .loadingScreen {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   padding: 20px 16px;
   box-sizing: border-box;
   animation: fadeIn 360ms ease both;
-  background: transparent; /* allow animated background to show through */
-  backdrop-filter: none; /* remove blur to see animated background */
+  background: transparent;
   overflow: hidden;
 }
 
@@ -23,11 +20,12 @@
   align-items: center;
   text-align: center;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   gap: 40px;
-  padding: 0 16px;
+  padding: 60px 16px;
   max-width: 740px;
   justify-content: center;
+  flex: 1;
 }
 
 .loadingContentWrapper {
@@ -41,7 +39,9 @@
 /* Titles inside the animated content should be hidden because the
    main title is rendered statically above. This preserves layout
    while allowing only the variable content below the title to animate. */
-.loadingContentWrapper .loadingMainTitle { display: none; }
+.loadingContentWrapper .loadingMainTitle {
+  display: none;
+}
 
 .fadeIn {
   opacity: 1;
@@ -62,7 +62,7 @@
 .loadingMainTitle {
   margin: 0;
   color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 28px;
   font-weight: 700;
   line-height: 1.08;
@@ -73,7 +73,7 @@
 .loadingSubtitle {
   margin: 0;
   color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.22;
@@ -93,7 +93,7 @@
   width: 42px;
   height: 4px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
 }
 
 .dividerDot {
@@ -119,7 +119,7 @@
   padding-top: 12px;
   border-top: 1px solid rgba(14, 204, 126, 0.2);
   color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.25;
@@ -142,7 +142,7 @@
 .loadingDescription {
   margin: 0;
   color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.22;
@@ -171,7 +171,9 @@
   -ms-overflow-style: none;
 }
 
-.servicesCarousel::-webkit-scrollbar { display: none; }
+.servicesCarousel::-webkit-scrollbar {
+  display: none;
+}
 
 .serviceCard {
   display: flex;
@@ -185,7 +187,7 @@
   border: 1px solid rgba(14, 204, 126, 0.3);
   background: var(--common-white, #fff);
   color: var(--gradient1-textContrast);
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 1.625;
@@ -194,32 +196,84 @@
   scroll-snap-align: center;
 }
 
-.serviceCard svg { width: 44px; height: 44px; flex-shrink: 0; }
+.serviceCard svg {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
 
-.carouselIndicators { display: flex; align-items: center; gap: 4px; margin-top: 12px; }
+.carouselIndicators {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
 
-.indicator { width: 4px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%); opacity: 0.4; transition: all 0.2s ease; }
+.indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
+  opacity: 0.4;
+  transition: all 0.2s ease;
+}
 
-.indicatorActive { width: 20px; opacity: 1; }
+.indicatorActive {
+  width: 20px;
+  opacity: 1;
+}
 
-.loadingSpinner { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; }
+.loadingSpinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+}
 
-.loadingSpinnerSvg { animation: spin 2s linear infinite; transform-origin: center; }
+.loadingSpinnerSvg {
+  animation: spin 2s linear infinite;
+  transform-origin: center;
+}
 
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Larger screens */
 @media (min-width: 769px) {
-  .loadingScreen { padding: 40px 24px; }
-  .loadingSection { gap: 60px; padding: 0 32px; }
-  .loadingContent { gap: 24px; }
-  .loadingMainTitle { font-size: clamp(32px, 4.5vw, 48px); }
-  .loadingSubtitle { font-size: 18px; }
-  .loadingDescription { font-size: 18px; }
-  .loadingFeatures { max-width: 480px; }
+  .loadingScreen {
+    padding: 40px 24px;
+  }
+  .loadingSection {
+    gap: 60px;
+    padding: 0 32px;
+  }
+  .loadingContent {
+    gap: 24px;
+  }
+  .loadingMainTitle {
+    font-size: clamp(32px, 4.5vw, 48px);
+  }
+  .loadingSubtitle {
+    font-size: 18px;
+  }
+  .loadingDescription {
+    font-size: 18px;
+  }
+  .loadingFeatures {
+    max-width: 480px;
+  }
 }
 
 /* Very large screens tweak */
 @media (min-width: 900px) {
-  .loadingSection { max-width: 740px; }
+  .loadingSection {
+    max-width: 740px;
+  }
 }

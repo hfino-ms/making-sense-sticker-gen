@@ -1,4 +1,5 @@
 import { composeStickerFromSource } from '../utils/composeSticker';
+import { composeStickerWithHtmlLabel } from '../utils/htmlToCanvas';
 
 type Gen = { b64?: string | null; url?: string | null; raw?: any };
 
@@ -43,9 +44,25 @@ export async function generateStickerAndCompose({ agent, survey, variant, photo 
   let composedDataUrl: string | null = null;
   if (source) {
     try {
-      composedDataUrl = await composeStickerFromSource(source);
+      // Try new HTML-based approach first
+      if (agent?.name || agent?.key) {
+        const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+        composedDataUrl = await composeStickerWithHtmlLabel(source, agent.name || agent.key, {
+          stickerSize: 1024,
+          frameUrl,
+          drawFrame: true
+        });
+      } else {
+        // Fallback to canvas approach
+        composedDataUrl = await composeStickerFromSource(source, undefined, 1024, { agentLabel: null, drawFrame: true });
+      }
     } catch (e) {
-      console.warn('composeStickerFromSource failed on initial source, attempting to fetch and convert to data URL', e);
+      console.warn('HTML composition failed, attempting canvas fallback', e);
+      try {
+        composedDataUrl = await composeStickerFromSource(source, undefined, 1024, { agentLabel: agent?.name || agent?.key || null, drawFrame: true });
+      } catch (e2) {
+        console.warn('Canvas fallback also failed, attempting to fetch and convert to data URL', e2);
+      }
     }
   }
 
@@ -55,7 +72,22 @@ export async function generateStickerAndCompose({ agent, survey, variant, photo 
       if (resp.ok) {
         const blob = await resp.blob();
         const dataUrl = await blobToDataUrl(blob);
-        composedDataUrl = await composeStickerFromSource(dataUrl);
+        try {
+          // Try HTML approach first
+          if (agent?.name || agent?.key) {
+            const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+            composedDataUrl = await composeStickerWithHtmlLabel(dataUrl, agent.name || agent.key, {
+              stickerSize: 1024,
+              frameUrl,
+              drawFrame: true
+            });
+          } else {
+            composedDataUrl = await composeStickerFromSource(dataUrl, undefined, 1024, { agentLabel: null, drawFrame: true });
+          }
+        } catch (e) {
+          console.warn('HTML composition failed for remote image, using canvas fallback', e);
+          composedDataUrl = await composeStickerFromSource(dataUrl, undefined, 1024, { agentLabel: agent?.name || agent?.key || null, drawFrame: true });
+        }
         source = dataUrl;
       }
     } catch (e) {

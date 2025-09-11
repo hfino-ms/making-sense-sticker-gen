@@ -95,19 +95,6 @@ const LoadingScreen = () => {
           investments.
         </h1>
 
-        <div className={styles.loadingDivider}>
-          <div className={styles.dividerLine}></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
-            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
-            <defs>
-              <linearGradient id="paint0_linear" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#0ECC7E"/>
-                <stop offset="1" stopColor="#53C0D2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-
         <div className={styles.loadingFeatures}>
           <div className={styles.featureItem}>
             <svg width="7" height="8" viewBox="0 0 7 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -190,19 +177,6 @@ const LoadingScreen = () => {
           Technology for smarter<br />
           investments.
         </h1>
-
-        <div className={styles.loadingDivider}>
-          <div className={styles.dividerLine}></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
-            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear_step3)"/>
-            <defs>
-              <linearGradient id="paint0_linear_step3" x1="0.5" y1="2" x2="4.5" y2="2" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#0ECC7E"/>
-                <stop offset="1" stopColor="#53C0D2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
 
         <div className={styles.loadingServicesSection}>
           <h2 className={styles.loadingSubtitle}>How We Help?</h2>

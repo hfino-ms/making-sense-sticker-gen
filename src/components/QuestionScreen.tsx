@@ -3,6 +3,7 @@ import LinearSlider from './LinearSlider';
 import RadioListQuestion from './RadioListQuestion';
 import styles from './QuestionScreen.module.css';
 import Button from './ui/Button';
+import AnimatedSection from './AnimatedSection';
 import type { FC } from 'react';
 
 type Props = {
@@ -49,45 +50,51 @@ const QuestionScreen: FC<Props> = ({
     switch (layout) {
       case 'dial':
         return (
-          <LinearSlider
-            value={getDialValue()}
-            onChange={handleDialChange}
-          />
+          <AnimatedSection animateKey={`dial-${selected?.choice || getDialValue()}`} duration={260}>
+            <LinearSlider
+              value={getDialValue()}
+              onChange={handleDialChange}
+            />
+          </AnimatedSection>
         );
 
       case 'radio-list':
         return (
-          <RadioListQuestion
-            options={question.options}
-            selectedId={selected?.choice}
-            onSelect={(optId) => onSelect(optId)}
-          />
+          <AnimatedSection animateKey={`radlist-${selected?.choice || ''}`} duration={260}>
+            <RadioListQuestion
+              options={question.options}
+              selectedId={selected?.choice}
+              onSelect={(optId) => onSelect(optId)}
+            />
+          </AnimatedSection>
         );
 
       case 'icons':
       default:
         return (
-          <div className={styles.questionCardsContainer}>
-            <div className={styles.questionOptions}>
-              {question.options.map((option) => (
-                <button
-                  key={option.id}
-                  className={`${styles.questionOption} ${selected?.choice === option.id ? styles.questionOptionSelected : ''}`}
-                  onClick={() => handleOptionClick(option.id)}
-                >
-                  {option.icon && (
-                    <div className={styles.optionIcon}>
-                      <img
-                        src={option.icon}
-                        alt={`${option.label} icon`}
-                      />
-                    </div>
-                  )}
-                  <div className={styles.optionLabel}>{option.label}</div>
-                </button>
-              ))}
+          <AnimatedSection animateKey={`icons-${selected?.choice || ''}`} duration={260}>
+            <div className={styles.questionCardsContainer}>
+              <div className={styles.questionOptions}>
+                {question.options.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`${styles.questionOption} ${selected?.choice === option.id ? styles.questionOptionSelected : ''}`}
+                    onClick={() => handleOptionClick(option.id)}
+                  >
+                    {option.icon && (
+                      <div className={styles.optionIcon}>
+                        <img
+                          src={option.icon}
+                          alt={`${option.label} icon`}
+                        />
+                      </div>
+                    )}
+                    <div className={styles.optionLabel}>{option.label}</div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </AnimatedSection>
         );
     }
   };

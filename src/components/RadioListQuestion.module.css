@@ -1,29 +1,32 @@
 /* iPad 11 Pro optimized radio list matching Figma design */
 .radioListContainer {
-  /* Use a responsive 4-column grid for desktop/tablet to match design */
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Vertical layout matching Figma design - one below another */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 1100px; /* allow more horizontal space so options don't overlap CTAs */
+  max-width: 696px; /* match Figma design width */
   margin: 0 auto;
-  align-items: start;
+  height: 280px; /* match Figma design height */
   box-sizing: border-box;
 }
 
 .radioOption {
   display: flex;
-  width: 100%;
-  padding: 18px 28px; /* slightly increased horizontal space for touch targets */
+  width: 286px; /* exact width from Figma */
+  padding: 16px 40px; /* exact padding from Figma */
   align-items: center;
-  gap: 20px;
+  gap: 24px; /* exact gap from Figma */
   border-radius: 10px;
-  background: #FFF;
-  box-shadow: 0 50px 60px 0 rgba(6, 6, 6, 0.10);
+  background: #fff;
+  box-shadow: 0 50px 60px 0 rgba(6, 6, 6, 0.1);
   border: none;
   cursor: pointer;
   text-align: left;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* prevent shrinking */
 }
 
 .radioOption:hover {
@@ -33,8 +36,12 @@
 
 .radioOptionSelected {
   transform: translateY(-4px);
-  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.20);
-  background: linear-gradient(180deg, rgba(14,204,126,0.08), rgba(83,192,210,0.06));
+  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(14, 204, 126, 0.08),
+    rgba(83, 192, 210, 0.06)
+  );
 }
 
 .radioButton {
@@ -44,7 +51,7 @@
   aspect-ratio: 1/1;
   border-radius: 10px;
   border: 1px solid #616161;
-  background: #FFF;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,24 +59,24 @@
 }
 
 .radioButtonChecked {
-  border-color: #0ECC7E;
-  background: #0ECC7E;
+  border-color: #0ecc7e;
+  background: #0ecc7e;
 }
 
 .radioDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #FFF;
+  background: #fff;
 }
 
 .radioLabel {
   color: #111210;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 600;
+  font-weight: 700; /* match Figma design - 700 instead of 600 */
   line-height: normal;
   text-transform: uppercase;
   /* Safari font rendering */
@@ -77,20 +84,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Responsive adjustments for smaller screens while maintaining iPad Pro optimization */
+/* Responsive adjustments for smaller screens while maintaining vertical layout */
 @media (max-width: 768px) {
   .radioListContainer {
-    display: flex;
-    flex-direction: column;
     height: auto;
-    gap: 16px;
-    justify-content: flex-start;
-    align-items: center;
+    gap: 12px;
+    max-width: 90%;
   }
 
   .radioOption {
     width: 100%;
-    max-width: 420px;
+    max-width: 320px;
     padding: 14px 32px;
     gap: 20px;
   }
@@ -111,52 +115,58 @@
 }
 
 @media (max-width: 480px) {
+  .radioListContainer {
+    gap: 10px;
+  }
+
   .radioOption {
     width: 100%;
     max-width: 280px;
     padding: 12px 24px;
     gap: 16px;
   }
-  
+
   .radioButton {
     width: 14px;
     height: 14px;
   }
-  
+
   .radioDot {
     width: 5px;
     height: 5px;
   }
-  
+
   .radioLabel {
     font-size: 13px;
   }
 }
 
-/* iPad Pro 11" specific optimization */
-@media (min-width: 744px) and (max-width: 1024px) {
+/* iPad Pro 11" and larger screens - maintain Figma design dimensions */
+@media (min-width: 744px) {
   .radioListContainer {
     height: 280px;
     max-width: 696px;
+    gap: 16px;
   }
-  
+
   .radioOption {
     width: 286px;
     padding: 16px 40px;
     gap: 24px;
   }
-  
+
   .radioButton {
     width: 18px;
     height: 18px;
   }
-  
+
   .radioDot {
     width: 8px;
     height: 8px;
   }
-  
+
   .radioLabel {
     font-size: 16px;
+    font-weight: 700;
   }
 }

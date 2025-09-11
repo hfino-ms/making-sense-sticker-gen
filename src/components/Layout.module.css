@@ -32,7 +32,8 @@
 :global(html.overlay-ready) .themeOverlay {
   visibility: visible;
   opacity: 1;
-  transition: opacity 300ms linear, background-position 900ms ease-in-out, transform 900ms cubic-bezier(.2,.8,.2,1);
+  transition: opacity 300ms linear, background-position 900ms ease-in-out,
+    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
   backdrop-filter: blur(6px) saturate(1.02);
 }
 
@@ -57,59 +58,89 @@
 }
 
 @keyframes particleMove {
-  0% { transform: translate3d(0,0,0) rotate(0deg); }
-  50% { transform: translate3d(6vw, -3vh, 0) rotate(180deg); }
-  100% { transform: translate3d(0,0,0) rotate(360deg); }
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(6vw, -3vh, 0) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(360deg);
+  }
 }
 
 /* Light Theme Background */
 :global(html[data-theme="light"]) .themeOverlay {
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,249,248,0.98));
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(247, 249, 248, 0.98)
+  );
   background-color: #ffffff;
   transform: scale(1.02);
   background-repeat: no-repeat;
-  background-size: 36% 36%, 28% 28%, 22% 22%;
-  background-position: 12% 18%, 70% 28%, 44% 64%;
-  background-image: 
-    radial-gradient(circle at 12% 18%, rgba(14,204,126,0.65) 0%, rgba(14,204,126,0.35) 30%, transparent 60%), 
-    radial-gradient(circle at 70% 28%, rgba(83,192,210,0.55) 0%, rgba(83,192,210,0.24) 30%, transparent 60%), 
-    radial-gradient(circle at 44% 64%, rgba(14,204,126,0.45) 0%, rgba(14,204,126,0.18) 30%, transparent 60%);
+  background-size: 44% 44%, 40% 40%;
+  background-position: 10% 24%, 86% 28%;
+  background-image: radial-gradient(
+      circle at 10% 24%,
+      rgba(14, 204, 126, 0.65) 0%,
+      rgba(14, 204, 126, 0.35) 30%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 86% 28%,
+      rgba(83, 192, 210, 0.55) 0%,
+      rgba(83, 192, 210, 0.24) 30%,
+      transparent 60%
+    );
   animation: blobsMove 6s ease-in-out infinite;
   filter: saturate(1.05) contrast(1.04);
 }
 
 /* Dark Theme Background */
 :global(html[data-theme="dark"]) .themeOverlay {
-  background-image: linear-gradient(180deg, rgba(2,4,6,0.99), rgba(3,5,8,0.99));
+  background-image: linear-gradient(
+    180deg,
+    rgba(2, 4, 6, 0.99),
+    rgba(3, 5, 8, 0.99)
+  );
   background-color: #02060a;
   transform: scale(1);
   background-repeat: no-repeat;
-  background-size: 34% 34%, 26% 26%, 20% 20%;
-  background-position: 14% 16%, 78% 24%, 46% 66%;
-  background-image: 
-    radial-gradient(circle at 14% 16%, rgba(14,204,126,0.48) 0%, rgba(14,204,126,0.22) 30%, transparent 60%), 
-    radial-gradient(circle at 78% 24%, rgba(83,192,210,0.38) 0%, rgba(83,192,210,0.16) 30%, transparent 60%), 
-    radial-gradient(circle at 46% 66%, rgba(14,204,126,0.28) 0%, rgba(14,204,126,0.12) 30%, transparent 60%);
+  background-size: 42% 42%, 38% 38%;
+  background-position: 12% 18%, 88% 22%;
+  background-image: radial-gradient(
+      circle at 12% 18%,
+      rgba(14, 204, 126, 0.48) 0%,
+      rgba(14, 204, 126, 0.22) 30%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 88% 22%,
+      rgba(83, 192, 210, 0.38) 0%,
+      rgba(83, 192, 210, 0.16) 30%,
+      transparent 60%
+    );
   animation: blobsMove 7s ease-in-out infinite reverse;
   filter: saturate(1.02) contrast(1.06);
 }
 
 @keyframes blobsMove {
   0% {
-    background-position: 12% 18%, 70% 28%, 44% 64%;
-    background-size: 36% 36%, 28% 28%, 22% 22%;
-    filter: blur(12px) saturate(1.04);
+    background-position: 10% 24%, 86% 28%;
+    background-size: 44% 44%, 40% 40%;
+    filter: blur(10px) saturate(1.03);
     opacity: 1;
   }
   50% {
-    background-position: 18% 10%, 64% 34%, 38% 58%;
-    background-size: 34% 34%, 30% 30%, 24% 24%;
+    background-position: 6% 18%, 90% 32%;
+    background-size: 42% 42%, 42% 42%;
     filter: blur(18px) saturate(1.06);
   }
   100% {
-    background-position: 14% 16%, 78% 24%, 46% 66%;
-    background-size: 34% 34%, 26% 26%, 20% 20%;
-    filter: blur(14px) saturate(1.04);
+    background-position: 12% 20%, 88% 26%;
+    background-size: 42% 42%, 38% 38%;
+    filter: blur(12px) saturate(1.03);
     opacity: 1;
   }
 }
@@ -125,7 +156,7 @@
   padding: 24px;
   justify-content: center;
   align-items: center;
-  background: #F9F9F9;
+  background: #f9f9f9;
   z-index: 6;
   box-sizing: border-box;
 }
@@ -151,7 +182,7 @@
   padding: 24px 24px 24px 40px;
   align-items: center;
   gap: 48px;
-  background: #F9F9F9;
+  background: #f9f9f9;
   z-index: 5;
   box-sizing: border-box;
 }
@@ -161,7 +192,7 @@
   align-items: flex-start;
   flex: 1 0 0;
   border-radius: 20px;
-  background: #EEE;
+  background: #eee;
 }
 
 .stepItem {
@@ -179,11 +210,11 @@
 }
 
 .stepActive .stepLine {
-  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
 }
 
 .stepTodo .stepLine {
-  background: #E0E0E0;
+  background: #e0e0e0;
 }
 
 .menu {
@@ -247,13 +278,21 @@
   color: var(--gradient1-textContrast);
   pointer-events: none;
   backdrop-filter: blur(6px);
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,251,250,0.88));
-  border-top: 1px solid rgba(0,0,0,0.04);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(250, 251, 250, 0.88)
+  );
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 :global(html[data-theme="dark"]) .appFooter {
-  background: linear-gradient(180deg, rgba(6,10,14,0.98), rgba(8,12,18,0.96));
-  border-top: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 10, 14, 0.98),
+    rgba(8, 12, 18, 0.96)
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--gradient1-textContrast);
 }
 
@@ -264,13 +303,13 @@
   }
 
   :global(html[data-theme="light"]) .themeOverlay {
-    background-size: 35% 35%, 26% 26%, 22% 22%;
-    animation: blobsMove 5s ease-in-out infinite;
+    background-size: 40% 40%, 36% 36%;
+    animation: blobsMove 10s ease-in-out infinite;
   }
 
   :global(html[data-theme="dark"]) .themeOverlay {
-    background-size: 32% 32%, 24% 24%, 20% 20%;
-    animation: blobsMove 6s ease-in-out infinite reverse;
+    background-size: 38% 38%, 34% 34%;
+    animation: blobsMove 12s ease-in-out infinite reverse;
   }
 }
 
@@ -280,13 +319,13 @@
   }
 
   :global(html[data-theme="light"]) .themeOverlay {
-    background-size: 30% 30%, 22% 22%, 18% 18%;
-    animation: blobsMove 6s ease-in-out infinite;
+    background-size: 34% 34%, 30% 30%;
+    animation: blobsMove 10s ease-in-out infinite;
   }
 
   :global(html[data-theme="dark"]) .themeOverlay {
-    background-size: 28% 28%, 20% 20%, 16% 16%;
-    animation: blobsMove 7s ease-in-out infinite reverse;
+    background-size: 32% 32%, 28% 28%;
+    animation: blobsMove 12s ease-in-out infinite reverse;
   }
 
   .stepper {

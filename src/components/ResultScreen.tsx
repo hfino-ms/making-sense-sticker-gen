@@ -1,8 +1,9 @@
 import type { GenerationResult } from '../types';
 import styles from './ResultScreen.module.css';
 import Button from './ui/Button';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { composeStickerFromSource } from '../utils/composeSticker';
+import { composeStickerWithHtmlLabel } from '../utils/htmlToCanvas';
 import type { FC } from 'react';
 
 type Props = {
@@ -24,29 +25,43 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
 
   // displayedSrc will hold the final composed image dataURL when available
   const [displayedSrc, setDisplayedSrc] = useState<string | null>(stickerSource || null);
+  const [servicesTriggered, setServicesTriggered] = useState(false);
 
   // Compose sticker for export (include frame overlay) — wrap the shared util
   const composeSticker = async (source?: string): Promise<string> => {
-    return composeStickerFromSource(source || stickerSource);
+    const src = source || stickerSource;
+    // If result.imageDataUrl exists it's likely already composed on the server; avoid re-drawing the frame
+    const alreadyComposed = !!((result as any)?.imageDataUrl);
+    const isRemoteSource = String(src || '').startsWith('http');
+    // Avoid drawing the frame if the source is a remote URL (server may have already composed it)
+    // or if the server already provided an imageDataUrl
+    const drawFrame = !isRemoteSource && !(alreadyComposed && String(src || '').startsWith('data:'));
+
+    try {
+      // Try HTML approach first if we have an agent name and drawing frame is allowed
+      if ((resultAgent?.name || resultAgent?.key) && drawFrame) {
+        const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+        return await composeStickerWithHtmlLabel(src, resultAgent.name || resultAgent.key, {
+          stickerSize: 1024,
+          frameUrl,
+          drawFrame
+        });
+      } else {
+        // Fallback to canvas approach
+        return await composeStickerFromSource(src, undefined, 1024, { agentLabel: resultAgent?.name || resultAgent?.key || null, drawFrame });
+      }
+    } catch (e) {
+      console.warn('HTML composition failed in ResultScreen, using canvas fallback', e);
+      return await composeStickerFromSource(src, undefined, 1024, { agentLabel: resultAgent?.name || resultAgent?.key || null, drawFrame });
+    }
   };
 
-  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const downloadRef = useRef<HTMLAnchorElement | null>(null);
-
   // Try composing on mount so the final screen shows the composed sticker with frame
-  // Avoid composing if stickerSource is already a data URL (assume it's already composed or baked)
   useEffect(() => {
     let mounted = true;
     (async () => {
       if (!stickerSource) return;
       try {
-        if (String(stickerSource).startsWith('data:')) {
-          // already a data URL — assume composed or baked in; do not re-compose to avoid double overlay
-          if (mounted) setDisplayedSrc(stickerSource);
-          return;
-        }
-
         const composed = await composeSticker(stickerSource);
         if (mounted && composed) {
           setDisplayedSrc(composed);
@@ -61,40 +76,36 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stickerSource]);
 
-  const composeAndGetDataUrl = async (): Promise<string> => {
+  // Auto-trigger services when component mounts and sticker is ready
+  useEffect(() => {
+    if (!displayedSrc || !onShare) return;
+
     try {
-      const data = await composeSticker();
-      return data;
+      // Use a global window Set to avoid duplicate triggers across React StrictMode double mounts
+      const key = displayedSrc;
+      const anyWin = window as any;
+      if (!anyWin.__submittedStickerUrls) anyWin.__submittedStickerUrls = new Set<string>();
+      const submittedSet: Set<string> = anyWin.__submittedStickerUrls;
+
+      if (submittedSet.has(key)) {
+        // already submitted this sticker, skip
+        setServicesTriggered(true);
+        return;
+      }
+
+      // mark and call
+      submittedSet.add(key);
+      setServicesTriggered(true);
+      onShare();
     } catch (e) {
-      return stickerSource || '';
+      // fallback: call once via local state
+      if (!servicesTriggered) {
+        setServicesTriggered(true);
+        onShare();
+      }
     }
-  };
-
-  const showPreview = async () => {
-    const data = await composeAndGetDataUrl();
-    setPreviewSrc(data || null);
-    setPreviewOpen(true);
-  };
-
-  const downloadPreview = () => {
-    if (!previewSrc) return;
-    const a = downloadRef.current;
-    if (!a) return;
-    a.href = previewSrc;
-    a.download = `${resultAgent?.name || 'sticker'}.png`;
-    a.click();
-  };
-
-  const copyBase64 = async () => {
-    if (!previewSrc) return;
-    const b64 = previewSrc.split(',')[1] || previewSrc;
-    try {
-      await navigator.clipboard.writeText(b64);
-      // brief visual feedback could be added here
-    } catch (e) {
-      console.warn('Failed to copy base64 to clipboard', e);
-    }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedSrc, onShare]);
 
   const printSticker = async () => {
     const w = window.open('', '_blank');
@@ -117,53 +128,107 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
     setTimeout(() => onPrint(), 1000);
   };
 
-
   const providerError = (result as any)?.providerError || null;
 
-  // Removed automatic submission on mount. Submission should be triggered manually by the user
-  // via the Share button below to avoid duplicate webhook triggers and accidental resubmits.
+  // Extract personality data from the agent
+  const getPersonalityData = () => {
+    if (!resultAgent) return null;
 
+    const map = {
+      'deal': {
+        title: 'The Deal Hunter',
+        personality: 'Fast, decisive, and always scanning the market for the next big opportunity.',
+        strengths: 'Rapid due diligence, spotting hidden gems, predicting market trends before they hit the mainstream.',
+        bestFor: 'PE professionals who move quickly on opportunities and thrive in competitive deal environments.',
+        agentWill: 'Feed you high-probability deal leads, flag undervalued targets, and surface early-stage market shifts.'
+      },
+      'risk': {
+        title: 'The Risk Balancer',
+        personality: 'Cautious yet opportunistic, ensuring calculated risks with downside protection.',
+        strengths: 'Risk modeling, scenario planning, and creating win–win deal structures.',
+        bestFor: 'Investors who weigh upside potential against volatility and prefer stable, sustainable growth.',
+        agentWill: 'Run risk simulations, stress-test deals, and flag portfolio vulnerabilities before they become threats.'
+      },
+      'transform': {
+        title: 'The Transformer',
+        personality: 'Change-maker focused on operational excellence and rapid value creation in portfolio companies.',
+        strengths: 'Identifying inefficiencies, driving process automation, and unlocking productivity.',
+        bestFor: 'Operating partners and value creation teams aiming for quick performance uplifts.',
+        agentWill: 'Audit operations, recommend AI-driven efficiencies, and track post-acquisition performance gains.'
+      },
+      'vision': {
+        title: 'The Visionary',
+        personality: 'Future-focused leader who bets on innovation and market disruption.',
+        strengths: 'Spotting emerging trends, funding disruptive business models, and future-proofing investments.',
+        bestFor: 'Investors who see tech adoption and product innovation as the main growth lever.',
+        agentWill: 'Map out long-term market shifts, validate innovative strategies, and identify early adoption opportunities.'
+      },
+      'integrator': {
+        title: 'The Integrator',
+        personality: 'Connector of people, processes, and strategies across the portfolio.',
+        strengths: 'Building strong management teams, fostering collaboration, and ensuring alignment with the fund\'s vision.',
+        bestFor: 'Leaders who believe strong execution comes from strong relationships.',
+        agentWill: 'Optimize team structures, improve communication flows, and align execution with investment theses.'
+      }
+    } as Record<string, any>;
+
+    const rawName = String(resultAgent.name || resultAgent.key || '').toLowerCase();
+
+    // Determine key by looking for keyword matches
+    let key = 'integrator';
+    if (rawName.includes('deal') || rawName.includes('hunter')) key = 'deal';
+    else if (rawName.includes('risk')) key = 'risk';
+    else if (rawName.includes('transform')) key = 'transform';
+    else if (rawName.includes('vision')) key = 'vision';
+    else if (rawName.includes('integrat')) key = 'integrator';
+
+    return map[key] || map.integrator;
+  };
+
+  const personalityData = getPersonalityData();
 
   return (
     <div className={styles.resultContainer}>
+
+      {/* Main Section */}
       <div className={styles.resultSection}>
-        <h1 className={styles.resultTitle}>{userName ? `${userName}, you are a ${resultAgent?.name || 'Agent'}!` : `You are ${resultAgent?.name || 'Agent'}!`}</h1>
+        {/* Hero Section */}
+        <div className={styles.heroSection}>
+          <div className={styles.heroContent}>
+            <h1 className={styles.resultTitle}>
+              {userName ? `${userName}, you are` : 'You are'}<br />
+              The {resultAgent?.name || 'Integrator'}!
+            </h1>
 
-        <div className={styles.resultDivider}>
-          <div className={styles.dividerLine}></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
-            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
-            <defs>
-              <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1EDD8E"/>
-                <stop offset="1" stopColor="#53C0D2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
+            <div className={styles.resultDivider}>
+              <div className={styles.dividerLine}></div>
+              <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
+                <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
+                <defs>
+                  <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#1EDD8E"/>
+                    <stop offset="1" stopColor="#53C0D2"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
 
-        <div className={styles.resultDescription}>
-          <p className={styles.resultLine1}>{resultAgent?.descriptor}</p>
-          <p className={styles.resultLine2}>{resultAgent?.valueLine}</p>
-        </div>
-
-        {providerError && (
-          <div className={styles.resultProviderError}>Generation fallback used: {String(providerError)}</div>
-        )}
-
-        {/* Agent badge calculated from survey answers */}
-        {resultAgent && (
-          <div className={styles.agentBadge}>
-            <strong>Agent:</strong> {resultAgent.name}
+            {personalityData && (
+              <div className={styles.personalityDescription}>
+                <span className={styles.bold}>Personality: </span>
+                <span className={styles.regular}>{personalityData.personality} </span>
+                <span className={styles.bold}>Strengths: </span>
+                <span className={styles.regular}>{personalityData.strengths} </span>
+                <span className={styles.bold}>Best For: </span>
+                <span className={styles.regular}>{personalityData.bestFor} </span>
+                <span className={styles.bold}>Your Agent Will: </span>
+                <span className={styles.regular}>{personalityData.agentWill}</span>
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Agent label layer (text) */}
-        <div className={styles.archetypeLabel}>{resultAgent?.name}</div>
-
-        {/* Sticker display contained within a frame overlay */}
-        <div className={styles.stickerContainer}>
-          <div className={styles.stickerInner}>
+          {/* Sticker Image */}
+          <div className={styles.stickerContainer}>
             {displayedSrc ? (
               <img src={displayedSrc} alt="Sticker" className={styles.stickerImage} />
             ) : stickerSource ? (
@@ -173,64 +238,30 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
             )}
           </div>
 
-          {/* Frame overlay (decorative) only when sticker is not pre-composed */}
-          {!(displayedSrc && displayedSrc.startsWith('data:')) && (
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000"
-              srcSet="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=1000 1x, https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000 2x"
-              alt="frame"
-              className={styles.frameOverlay}
-              decoding="async"
-            />
-          )}
-        </div>
-
-        <div className={styles.resultButtons}>
-          <Button variant="secondary" onClick={onShare}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F0f4b2b4c1f4b4b719e6d2d6f3a8b5e6c?format=svg" alt="Share" className={styles.resultButtonIcon} />
-            SHARE
-          </Button>
-
-          <Button variant="primary" onClick={printSticker}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F1146f9e4771b4cff95e916ed9381032d?format=svg" alt="Print" className={styles.resultButtonIcon} />
-            PRINT
-          </Button>
-
-          <Button variant="text" onClick={showPreview}>
-            <img src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2Fb0d9f3c4e6a14b8aa2c3a9d6f7e8b1c2?format=svg" alt="Preview" className={styles.resultButtonIcon} />
-            PREVIEW FILE
-          </Button>
-        </div>
-
-        {/* Preview area for the composed file that would be saved/sent */}
-        {previewOpen && (
-          <div className={styles.filePreviewContainer}>
-            <div className={styles.filePreviewImageWrapper}>
-              {previewSrc ? (
-                <img src={previewSrc} alt="Composed preview" className={styles.filePreviewImage} />
-              ) : (
-                <div className={styles.filePreviewPlaceholder}>No preview available</div>
-              )}
-            </div>
-
-            <div className={styles.previewActions}>
-              <a ref={downloadRef} style={{ display: 'none' }} />
-              <button className={styles.previewButton} onClick={downloadPreview}>Download PNG</button>
-              <button className={styles.previewButton} onClick={() => window.open(previewSrc || '', '_blank')}>Open in new tab</button>
-              <button className={styles.previewButton} onClick={copyBase64}>Copy base64</button>
-              <button className={styles.previewButton} onClick={() => { setPreviewOpen(false); setPreviewSrc(null); }}>Close</button>
-            </div>
+          {/* CTAs */}
+          <div className={styles.ctaSection}>
+            <Button variant="primary" onClick={printSticker} className={styles.printButton}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 17H17V22H7V17Z" fill="currentColor"/>
+                <path d="M17 9H20C21.1046 9 22 9.89543 22 11V17H17V9Z" fill="currentColor"/>
+                <path d="M7 9V17H2V11C2 9.89543 2.89543 9 4 9H7Z" fill="currentColor"/>
+                <path d="M7 2H17V9H7V2Z" fill="currentColor"/>
+              </svg>
+              PRINT
+            </Button>
           </div>
-        )}
+        </div>
 
+        {/* Start Over Button */}
         <div className={styles.startOverSection}>
-          <Button variant="text" onClick={onRestart || (() => window.location.reload())}>
+          <Button variant="text" onClick={onRestart || (() => window.location.reload())} className={styles.startOverButton}>
             START OVER
           </Button>
         </div>
 
-        <div className={styles.resultEmail}>
-        </div>
+        {providerError && (
+          <div className={styles.resultProviderError}>Generation fallback used: {String(providerError)}</div>
+        )}
       </div>
     </div>
   );

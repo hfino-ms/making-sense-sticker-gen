@@ -1,4 +1,4 @@
-export async function composeStickerFromSource(stickerSource: string | null | undefined, frameUrl?: string, size = 1024): Promise<string> {
+export async function composeStickerFromSource(stickerSource: string | null | undefined, frameUrl?: string, size = 1024, options?: { agentLabel?: string | null; drawFrame?: boolean }): Promise<string> {
   if (!stickerSource) return '';
 
   const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
@@ -58,12 +58,18 @@ export async function composeStickerFromSource(stickerSource: string | null | un
     const defaultFrame = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
     const frameToLoad = frameUrl || defaultFrame;
 
-    try {
-      const frameImg = await loadImage(frameToLoad);
-      ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-    } catch (e) {
-      console.warn('composeStickerFromSource: failed to load frame overlay', e);
+    const shouldDrawFrame = options?.drawFrame ?? true;
+
+    if (shouldDrawFrame) {
+      try {
+        const frameImg = await loadImage(frameToLoad);
+        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+      } catch (e) {
+        console.warn('composeStickerFromSource: failed to load frame overlay', e);
+      }
     }
+
+    // NOTE: agentLabel is intentionally not rendered here; htmlToCanvas.composeStickerWithHtmlLabel handles label rendering.
 
     return canvas.toDataURL('image/png');
   } catch (e) {

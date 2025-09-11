@@ -1,16 +1,17 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
+import styles from './PhotoCapture.module.css';
+import Button from './ui/Button';
+import Divider from './ui/Divider';
+import AnimatedSection from './AnimatedSection';
 
 type Props = {
   onConfirm: (dataUrl?: string) => void;
   onSkip: () => void;
 };
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import styles from './PhotoCapture.module.css';
-import Button from './ui/Button';
-
 export default function PhotoCapture({ onConfirm, onSkip }: Props) {
-  const webcamRef = useRef<Webcam | null>(null);
+  const webcamRef = useRef<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const [cameraStarted, setCameraStarted] = useState(false);
@@ -85,73 +86,64 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
       <div className={styles.photoSection}>
         <h1 className={styles.photoTitle}>
           Go beyond and<br />
-          personalize your robot
+          personalize your character
         </h1>
-        
-        <div className={styles.photoDivider}>
-          <div className={styles.dividerLine}></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
-            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
-            <defs>
-              <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1EDD8E"/>
-                <stop offset="1" stopColor="#53C0D2"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        
+
+        <Divider />
+
         <p className={styles.photoDescription}>
-          Take a selfie to customize your robot's features to match your unique style.
+          Take a selfie to customize your character's features to match your unique style.
         </p>
-        
+
         {error && <div className={styles.errorBanner} role="alert">{error}</div>}
 
-        <div className={styles.cameraContainer}>
-          {cameraStarted && !snapshot && (
-            <div className={styles.cameraFrame}>
-              <Webcam
-                audio={false}
-                ref={webcamRef}
-                mirrored
-                screenshotFormat="image/jpeg"
-                videoConstraints={videoConstraints}
-                className={styles.cameraVideo}
-              />
-            </div>
-          )}
+        <AnimatedSection animateKey={`camera-${cameraStarted ? 'on' : 'off'}-${snapshot ? 'snap' : 'nosnap'}`} duration={360}>
+          <div className={styles.cameraContainer}>
+            {cameraStarted && !snapshot && (
+              <div className={styles.cameraFrame}>
+                <Webcam
+                  audio={false}
+                  ref={webcamRef}
+                  mirrored
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={videoConstraints}
+                  className={styles.cameraVideo}
+                />
+              </div>
+            )}
 
-          {snapshot && (
-            <div className={styles.photoPreview}>
-              <img src={snapshot} alt="Selfie preview" className={styles.previewImage} />
-            </div>
-          )}
-        </div>
+            {snapshot && (
+              <div className={styles.photoPreview}>
+                <img src={snapshot} alt="Selfie preview" className={styles.previewImage} />
+              </div>
+            )}
+          </div>
 
 
-        <div className={styles.photoButtons}>
-          {!snapshot && !cameraStarted && (
-            <>
-              <Button variant="text" onClick={onSkip}>SKIP</Button>
-              <Button variant="primary" onClick={startCamera}>OPEN CAMERA</Button>
+          <div className={styles.photoButtons}>
+            {!snapshot && !cameraStarted && (
+              <>
+                <Button variant="text" onClick={onSkip}>SKIP</Button>
+                <Button variant="primary" onClick={startCamera}>OPEN CAMERA</Button>
 
-            </>
-          )}
-          
-          {cameraStarted && !snapshot && (
-            <>
-              <Button variant="secondary" onClick={stopCamera}>CLOSE</Button>
-              <Button variant="primary" onClick={takePhoto} disabled={loading}>{loading ? 'TAKING...' : 'TAKE PHOTO'}</Button>
-            </>
-          )}
-          
-          {snapshot && (
-            <>
-              <Button variant="secondary" onClick={retake}>RETAKE</Button>
-              <Button variant="primary" onClick={confirm}>USE PHOTO</Button>
-            </>
-          )}
-        </div>
+              </>
+            )}
+
+            {cameraStarted && !snapshot && (
+              <>
+                <Button variant="secondary" onClick={stopCamera}>CLOSE</Button>
+                <Button variant="primary" onClick={takePhoto} disabled={loading}>{loading ? 'TAKING...' : 'TAKE PHOTO'}</Button>
+              </>
+            )}
+
+            {snapshot && (
+              <>
+                <Button variant="secondary" onClick={retake}>RETAKE</Button>
+                <Button variant="primary" onClick={confirm}>USE PHOTO</Button>
+              </>
+            )}
+          </div>
+        </AnimatedSection>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Layout from './components/Layout';
 import SplashScreen from './components/SplashScreen';
 import NameInput from './components/NameInput';
@@ -11,7 +11,7 @@ import ErrorBanner from './components/ErrorBanner';
 import SuccessBanner from './components/SuccessBanner';
 import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
-import PromptPreview from './components/PromptPreview';
+import AnimatedSection from './components/AnimatedSection';
 import { preparePromptAndAgent, generateAndCompose, submitComposed } from './services/workflowClient';
 
 const STEPS = {
@@ -40,7 +40,7 @@ function App() {
 
   const [agentResult, setAgentResult] = useState<{ key: string; name: string } | null>(null);
   const [promptText, setPromptText] = useState<string>('');
-  const [generating, setGenerating] = useState<boolean>(false);
+  const [, setGenerating] = useState<boolean>(false);
 
   const currentQuestion = QUESTIONS[questionIndex];
   const total = QUESTIONS.length;
@@ -121,18 +121,21 @@ function App() {
 
   const handleEmailSubmit = async (email: string) => {
     setUserEmail(email);
-    // Delegate generation preparation to workflow service
+    // Delegate generation preparation to workflow service and immediately start generation
     try {
       const { agent, prompt } = await preparePromptAndAgent(answers, Boolean(capturedPhoto));
       setAgentResult(agent);
       setPromptText(prompt);
-      setStep(STEPS.PromptPreview);
+      // Immediately trigger generation without manual preview step
+      await generateFromState(agent, prompt);
     } catch (e: any) {
       console.error('Failed to prepare prompt and agent', e);
       setError(String(e?.message || e));
       setStep(STEPS.Splash);
     }
   };
+
+  const submittedStickersRef = useRef<Set<string>>(new Set());
 
   const submitUserData = async () => {
     try {
@@ -161,6 +164,14 @@ function App() {
       }
 
       try {
+        // Prevent duplicate submissions for the same sticker data URL
+        if (stickerDataUrl && submittedStickersRef.current.has(stickerDataUrl)) {
+          console.log('Skipping duplicate submission for', stickerDataUrl);
+          setSuccessMessage("Success — we've already submitted this sticker.");
+          setTimeout(() => setSuccessMessage(null), 5000);
+          return;
+        }
+
         const resp = await submitComposed({
           email: userEmail || '',
           name: userName || '',
@@ -186,6 +197,9 @@ function App() {
         }
 
         try {
+          // Mark as submitted to avoid duplicates while webhook is fired
+          submittedStickersRef.current.add(stickerDataUrl);
+
           const { sendToN8nFromClient } = await import('./services/submitClient');
           const webhookPayload = {
             email: userEmail || '',
@@ -226,6 +240,62 @@ function App() {
     setStep(STEPS.EmailCapture);
   };
 
+  // Helper to trigger generation based on current state / provided agent+prompt
+  const generateFromState = async (providedAgent?: any, providedPrompt?: string) => {
+    setGenerating(true);
+    try {
+      // Build survey payload
+      const surveyPayload: Record<string,string> = (() => {
+        const surveyObj: Record<string,string> = {};
+        try {
+          QUESTIONS.forEach((q, idx) => {
+            const slot = idx + 1;
+            surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
+            const ans = (answers || {})[q.id];
+            if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
+            if (typeof ans === 'object') {
+              const choiceId = ans.choice;
+              const opt = q.options?.find((o: any) => o.id === choiceId);
+              surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
+            } else {
+              surveyObj[`answer_${slot}`] = String(ans);
+            }
+          });
+        } catch (e) { console.warn('Failed to build survey payload', e); }
+        return surveyObj;
+      })();
+
+      setStep(STEPS.Generating);
+      const out = await generateAndCompose(providedAgent || agentResult || null, surveyPayload, capturedPhoto);
+
+      if (!out || (!out.gen)) {
+        setError('No generation data returned from server');
+        setStep(STEPS.Result);
+        return;
+      }
+
+      if (out.composedDataUrl) {
+        setResult({ imageDataUrl: out.composedDataUrl, agent: providedAgent || agentResult as any, prompt: providedPrompt || promptText, source: 'openai' });
+        setStep(STEPS.Result);
+      } else if (out.source) {
+        if (out.source.startsWith('data:')) {
+          setResult({ imageDataUrl: out.source, agent: providedAgent || agentResult as any, prompt: providedPrompt || promptText, source: 'openai' });
+        } else {
+          setResult({ imageUrl: out.source, agent: providedAgent || agentResult as any, prompt: providedPrompt || promptText, source: 'openai' });
+        }
+        setStep(STEPS.Result);
+      } else {
+        setError('OpenAI returned no image data');
+        setStep(STEPS.Result);
+      }
+    } catch (e: any) {
+      console.error('Failed to call generation service', e);
+      setError(String(e?.message || e));
+      setStep(STEPS.Result);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const submitAndStay = async () => {
     await submitUserData();
@@ -258,7 +328,8 @@ function App() {
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {successMessage && <SuccessBanner>{successMessage}</SuccessBanner>}
 
-      {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
+      <AnimatedSection animateKey={step} duration={360}>
+        {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
       {step === STEPS.NameInput && <NameInput onContinue={(name) => { setUserName(name); setStep(STEPS.Questions); }} />}
       {step === STEPS.Questions && (
         <QuestionScreen
@@ -280,75 +351,8 @@ function App() {
       )}
 
       {step === STEPS.Generating && <LoadingScreen />}
-      {step === STEPS.PromptPreview && (
-        <PromptPreview
-          archetype={agentResult as any}
-          prompt={promptText}
-          onChange={(s: string) => setPromptText(s)}
-          onGenerate={async () => {
-            setGenerating(true);
-            try {
-              const surveyPayload: Record<string,string> = (() => {
-                const surveyObj: Record<string,string> = {};
-                try {
-                  QUESTIONS.forEach((q, idx) => {
-                    const slot = idx + 1;
-                    surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
-                    const ans = (answers || {})[q.id];
-                    if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
-                    if (typeof ans === 'object') {
-                      const choiceId = ans.choice;
-                      const opt = q.options?.find((o: any) => o.id === choiceId);
-                      surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
-                    } else {
-                      surveyObj[`answer_${slot}`] = String(ans);
-                    }
-                  });
-                } catch (e) { console.warn('Failed to build survey payload', e); }
-                return surveyObj;
-              })();
-
-              setStep(STEPS.Generating);
-              const out = await generateAndCompose(agentResult || null, surveyPayload, capturedPhoto);
-
-              if (!out || (!out.gen)) {
-                setError('No generation data returned from server');
-                setStep(STEPS.Result);
-                return;
-              }
-
-              if (out.composedDataUrl) {
-                setResult({ imageDataUrl: out.composedDataUrl, agent: agentResult as any, prompt: promptText, source: 'openai' });
-                setStep(STEPS.Result);
-              } else if (out.source) {
-                if (out.source.startsWith('data:')) {
-                  setResult({ imageDataUrl: out.source, agent: agentResult as any, prompt: promptText, source: 'openai' });
-                } else {
-                  setResult({ imageUrl: out.source, agent: agentResult as any, prompt: promptText, source: 'openai' });
-                }
-                setStep(STEPS.Result);
-              } else {
-                setError('OpenAI returned no image data');
-                setStep(STEPS.Result);
-              }
-            } catch (e: any) {
-              console.error('Failed to call generation service', e);
-              setError(String(e?.message || e));
-              setStep(STEPS.Result);
-            } finally {
-              setGenerating(false);
-            }
-          }}
-          onRegenerate={async () => {
-            try {
-              const { prompt } = await preparePromptAndAgent(answers, Boolean(capturedPhoto));
-              setPromptText(prompt);
-            } catch (e) { console.warn('Failed to regenerate prompt', e); }
-          }}
-          loading={generating}
-        />
-      )}
-      {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
+        {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
+      </AnimatedSection>
     </Layout>
   );
 }

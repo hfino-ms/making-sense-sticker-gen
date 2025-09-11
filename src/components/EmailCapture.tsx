@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import styles from './EmailCapture.module.css';
 import Button from './ui/Button';
+import Divider from './ui/Divider';
 
 type Props = { onSubmit: (email: string) => void; };
 
@@ -18,27 +19,16 @@ const EmailCapture = ({ onSubmit }: Props) => {
   return (
     <div className={styles.emailScreen}>
       <div className={styles.emailSection}>
-        <h1 className={styles.emailTitle}>Looking forward to making sense with you</h1>
-
-        <div className={styles.emailDivider}>
-          <div className="divider-line"></div>
-          <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className="divider-dot">
-            <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
-            <defs>
-              <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#1EDD8E"/>
-                <stop offset="1" stopColor="#53C0D2"/>
-              </linearGradient>
-            </defs>
-          </svg>
+        <div className={styles.emailHeaderSection}>
+          <h1 className={styles.emailTitle}>Get Your AI Agent</h1>
+          
+          <Divider />
+          
+          <p className={styles.emailDescription}>
+            Enter your email address below,<br />
+            and we'll send your new AI Agent directly to your inbox.
+          </p>
         </div>
-            
-        <p className={styles.emailHelper}>We’ll send you your sticker and the resulting agent by email.</p>
-
-        <p className={styles.emailDescription}>
-          Enter your email address below,
-and we'll send your new AI Agent directly to your inbox.
-        </p>
 
         <form onSubmit={handleSubmit} className={styles.emailForm}>
           <div className={styles.emailInputWrapper}>
@@ -52,7 +42,9 @@ and we'll send your new AI Agent directly to your inbox.
             />
           </div>
 
-          <Button type="submit" variant="primary">SUBMIT</Button>
+          <div className={styles.formActions}>
+            <Button type="submit" variant="primary">SUBMIT</Button>
+          </div>
         </form>
 
       </div>

@@ -29,7 +29,8 @@ const Layout: FC<Props> = ({ children, showProgress = false, currentStep = 1, to
 
   // Particle background: generate deterministic particle config on mount to avoid reflows
   const particleConfig = useMemo(() => {
-    const amount = 3; // simplified: only up to three moving spots
+    // Use CSS radial-gradient blobs for the large smooth background (disable small floating particles)
+    const amount = 0; // disable particle spans (we rely on CSS blobs instead)
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
     // Greens only: darker palette for dark theme, lighter palette for light theme
     const colors = dark

@@ -1,22 +1,189 @@
-/* Mobile-first photo capture */
-.photoScreen { width:100%; padding:16px; box-sizing:border-box; display:flex; align-items:center; justify-content:center; min-height: calc(100vh - var(--header-height) - var(--footer-height)); }
-.photoSection { width:100%; max-width:760px; display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; }
-.photoTitle { margin:0; font-size:20px; color:var(--gradient1-textContrast); font-weight:700; }
-.photoDivider { display:flex; gap:6px; align-items:center; }
-.photoDescription { color:var(--muted); font-size:14px; }
-.cameraContainer { width:100%; display:flex; align-items:center; justify-content:center; }
-.cameraFrame { width:280px; height:280px; background:#111; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-.cameraVideo { width:100%; height:100%; object-fit:cover; }
-.photoPreview { width:280px; height:280px; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
-.previewImage { width:100%; height:100%; object-fit:cover; }
-.photoButtons { display:flex; gap:10px; flex-direction:column; width:100%; align-items:center; }
-.photoButtonsRow { display:flex; gap:10px; }
+/* Photo capture screen matching Figma design exactly */
+.photoScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 144px); /* Account for header + stepper */
+  padding: 40px 24px;
+  box-sizing: border-box;
+  background: transparent;
+}
 
-.dividerLine { width:42px; height:4px; border-radius:3px; background: linear-gradient(90deg,#0ECC7E 0%,#53C0D2 100%); }
-.dividerDot { width:4px; height:4px; border-radius:4px; }
-.errorBanner { background: rgba(255,80,80,0.06); color: #ff5b5b; padding:8px 12px; border-radius:8px; }
+.photoSection {
+  display: flex;
+  width: 100%;
+  max-width: 690px; /* match Figma design */
+  padding-top: 24px;
+  flex-direction: column;
+  align-items: center;
+  gap: 60px; /* match Figma design */
+  text-align: center;
+}
 
-@media (min-width:769px) {
-  .photoTitle { font-size:24px; }
-  .photoButtons { flex-direction:row; }
+.photoTitle {
+  align-self: stretch;
+  color: #111210;
+  text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 52px; /* 108.333% */
+  margin: 0;
+  /* Safari font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.photoDescription {
+  align-self: stretch;
+  color: #111210;
+  text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px; /* 122.222% */
+  margin: 0;
+  /* Safari font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cameraContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.cameraFrame {
+  width: 320px;
+  height: 320px;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cameraVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoPreview {
+  width: 320px;
+  height: 320px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoButtons {
+  display: flex;
+  align-items: center; /* center align buttons vertically for consistent layout */
+  gap: 24px; /* match Figma design */
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.errorBanner {
+  background: rgba(255, 80, 80, 0.06);
+  color: #ff5b5b;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 8px 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .photoTitle {
+    font-size: 36px;
+    line-height: 40px;
+  }
+
+  .photoSection {
+    gap: 40px;
+    max-width: 100%;
+  }
+
+  .photoDescription {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .cameraFrame,
+  .photoPreview {
+    width: 280px;
+    height: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .photoScreen {
+    padding: 20px 16px;
+  }
+
+  .photoTitle {
+    font-size: 28px;
+    line-height: 32px;
+  }
+
+  .photoSection {
+    gap: 32px;
+  }
+
+  .photoDescription {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .photoButtons {
+    gap: 16px;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
+
+  .cameraFrame,
+  .photoPreview {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+/* iPad Pro and larger screens - maintain Figma design */
+@media (min-width: 744px) {
+  .photoTitle {
+    font-size: 48px;
+    line-height: 52px;
+  }
+
+  .photoDescription {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .photoSection {
+    gap: 60px;
+    max-width: 690px;
+  }
 }
