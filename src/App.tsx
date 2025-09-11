@@ -11,7 +11,7 @@ import ErrorBanner from './components/ErrorBanner';
 import SuccessBanner from './components/SuccessBanner';
 import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
-import AnimatedSection from './components/AnimatedSection';
+import MotionSection from './components/MotionSection';
 import { preparePromptAndAgent, generateAndCompose, submitComposed } from './services/workflowClient';
 
 const STEPS = {
@@ -322,7 +322,7 @@ function App() {
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {successMessage && <SuccessBanner>{successMessage}</SuccessBanner>}
 
-      <AnimatedSection animateKey={step} duration={360}>
+      <MotionSection animateKey={step} duration={360}>
         {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
       {step === STEPS.NameInput && <NameInput onContinue={(name) => { setUserName(name); setStep(STEPS.Questions); }} />}
       {step === STEPS.Questions && (
@@ -346,7 +346,7 @@ function App() {
 
       {step === STEPS.Generating && <LoadingScreen />}
         {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
-      </AnimatedSection>
+      </MotionSection>
     </Layout>
   );
 }

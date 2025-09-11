@@ -1,10 +1,10 @@
-import type { GenerationResult } from '../types';
 import styles from './ResultScreen.module.css';
-import Button from './ui/Button';
-import { useState, useEffect } from 'react';
+import MotionSection from './MotionSection';
 import { composeStickerFromSource } from '../utils/composeSticker';
 import { composeStickerWithHtmlLabel } from '../utils/htmlToCanvas';
+import { useEffect, useState } from 'react';
 import type { FC } from 'react';
+import type { GenerationResult } from '../types';
 
 type Props = {
   result: GenerationResult;
@@ -18,27 +18,20 @@ type Props = {
 
 const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, onRestart }) => {
   const imageUrl = (result as any)?.imageUrl || '';
-  // Determine agent info: prefer result.agent, fallback to prop 'agent'
   const resultAgent = (result as any)?.agent || agent || null;
-  // Use the frame URL directly - no complex composition
   const stickerSource = (result as any)?.imageDataUrl || imageUrl;
 
-  // displayedSrc will hold the final composed image dataURL when available
   const [displayedSrc, setDisplayedSrc] = useState<string | null>(stickerSource || null);
+  const [stickerVisible, setStickerVisible] = useState(false);
   const [servicesTriggered, setServicesTriggered] = useState(false);
 
-  // Compose sticker for export (include frame overlay) — wrap the shared util
   const composeSticker = async (source?: string): Promise<string> => {
     const src = source || stickerSource;
-    // If result.imageDataUrl exists it's likely already composed on the server; avoid re-drawing the frame
     const alreadyComposed = !!((result as any)?.imageDataUrl);
     const isRemoteSource = String(src || '').startsWith('http');
-    // Avoid drawing the frame if the source is a remote URL (server may have already composed it)
-    // or if the server already provided an imageDataUrl
     const drawFrame = !isRemoteSource && !(alreadyComposed && String(src || '').startsWith('data:'));
 
     try {
-      // Try HTML approach first if we have an agent name and drawing frame is allowed
       if ((resultAgent?.name || resultAgent?.key) && drawFrame) {
         const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
         return await composeStickerWithHtmlLabel(src, resultAgent.name || resultAgent.key, {
@@ -47,7 +40,6 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
           drawFrame
         });
       } else {
-        // Fallback to canvas approach
         return await composeStickerFromSource(src, undefined, 1024, { agentLabel: resultAgent?.name || resultAgent?.key || null, drawFrame });
       }
     } catch (e) {
@@ -56,7 +48,6 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
     }
   };
 
-  // Try composing on mount so the final screen shows the composed sticker with frame
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -68,7 +59,6 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
         }
       } catch (e) {
         console.warn('ResultScreen: failed to compose sticker on mount', e);
-        // leave displayedSrc as original
         if (mounted) setDisplayedSrc(stickerSource || null);
       }
     })();
@@ -76,29 +66,37 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stickerSource]);
 
-  // Auto-trigger services when component mounts and sticker is ready
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | null = null;
+    if (!displayedSrc) {
+      setStickerVisible(false);
+      return () => { if (t) clearTimeout(t); };
+    }
+
+    // start hidden, then animate in to simulate 'sticking' to screen
+    setStickerVisible(false);
+    t = setTimeout(() => setStickerVisible(true), 520);
+
+    return () => { if (t) clearTimeout(t); };
+  }, [displayedSrc]);
+
   useEffect(() => {
     if (!displayedSrc || !onShare) return;
-
     try {
-      // Use a global window Set to avoid duplicate triggers across React StrictMode double mounts
       const key = displayedSrc;
       const anyWin = window as any;
       if (!anyWin.__submittedStickerUrls) anyWin.__submittedStickerUrls = new Set<string>();
       const submittedSet: Set<string> = anyWin.__submittedStickerUrls;
 
       if (submittedSet.has(key)) {
-        // already submitted this sticker, skip
         setServicesTriggered(true);
         return;
       }
 
-      // mark and call
       submittedSet.add(key);
       setServicesTriggered(true);
       onShare();
     } catch (e) {
-      // fallback: call once via local state
       if (!servicesTriggered) {
         setServicesTriggered(true);
         onShare();
@@ -120,22 +118,24 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
       outSrc = stickerSource;
     }
 
-    w.document.write(`<html><head><title>${resultAgent?.name || 'Agent'} Sticker</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff;">
-      <img src="${outSrc}" style="max-width:90vw;max-height:90vh;object-fit:contain;"/>
+    w.document.write(`<html><head><title>${resultAgent?.name || 'Agent'} Sticker</title><style>
+      html,body{height:100%;margin:0}
+      .print-body{height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
+      .print-image{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:18px;padding:12px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,0.12)}
+    </style></head><body class="print-body">
+      <img src="${outSrc}" class="print-image"/>
       <script>window.onload=function(){setTimeout(function(){window.print();}, 300)}<\/script>
     </body></html>`);
     w.document.close();
     setTimeout(() => onPrint(), 1000);
   };
 
-  const providerError = (result as any)?.providerError || null;
 
-  // Extract personality data from the agent
   const getPersonalityData = () => {
     if (!resultAgent) return null;
 
     const map = {
-      'deal': {
+'deal': {
         title: 'The Deal Hunter',
         personality: 'Fast, decisive, and always scanning the market for the next big opportunity.',
         strengths: 'Rapid due diligence, spotting hidden gems, predicting market trends before they hit the mainstream.',
@@ -173,8 +173,6 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
     } as Record<string, any>;
 
     const rawName = String(resultAgent.name || resultAgent.key || '').toLowerCase();
-
-    // Determine key by looking for keyword matches
     let key = 'integrator';
     if (rawName.includes('deal') || rawName.includes('hunter')) key = 'deal';
     else if (rawName.includes('risk')) key = 'risk';
@@ -188,32 +186,16 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
   const personalityData = getPersonalityData();
 
   return (
-    <div className={styles.resultContainer}>
-
-      {/* Main Section */}
+    <MotionSection animateKey={displayedSrc || imageUrl || 'result'} duration={420} className={styles.resultContainer}>
       <div className={styles.resultSection}>
-        {/* Hero Section */}
         <div className={styles.heroSection}>
           <div className={styles.heroContent}>
-            <h1 className={styles.resultTitle}>
-              {userName ? `${userName}, you are` : 'You are'}<br />
-              The {resultAgent?.name || 'Integrator'}!
-            </h1>
-
+            <h1 className={styles.resultTitle}>{userName ? `${userName}, you are` : 'You are'}<br />{resultAgent?.name || 'Integrator'}!</h1>
             <div className={styles.resultDivider}>
               <div className={styles.dividerLine}></div>
-              <svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.dividerDot}>
-                <circle cx="2.5" cy="2" r="2" fill="url(#paint0_linear)"/>
-                <defs>
-                  <linearGradient id="paint0_linear" x1="0.688744" y1="1.47298" x2="2.12203" y2="3.02577" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#1EDD8E"/>
-                    <stop offset="1" stopColor="#53C0D2"/>
-                  </linearGradient>
-                </defs>
-              </svg>
+              <div className={styles.dividerDot} style={{ background: 'linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%)' }}></div>
             </div>
-
-            {personalityData && (
+         {personalityData && (
               <div className={styles.personalityDescription}>
                 <span className={styles.bold}>Personality: </span>
                 <span className={styles.regular}>{personalityData.personality} </span>
@@ -225,45 +207,19 @@ const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, on
                 <span className={styles.regular}>{personalityData.agentWill}</span>
               </div>
             )}
-          </div>
-
-          {/* Sticker Image */}
-          <div className={styles.stickerContainer}>
-            {displayedSrc ? (
-              <img src={displayedSrc} alt="Sticker" className={styles.stickerImage} />
-            ) : stickerSource ? (
-              <img src={stickerSource} alt="Sticker" className={styles.stickerImage} />
-            ) : (
-              <div className={styles.stickerPlaceholder} />
-            )}
-          </div>
-
-          {/* CTAs */}
-          <div className={styles.ctaSection}>
-            <Button variant="primary" onClick={printSticker} className={styles.printButton}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 17H17V22H7V17Z" fill="currentColor"/>
-                <path d="M17 9H20C21.1046 9 22 9.89543 22 11V17H17V9Z" fill="currentColor"/>
-                <path d="M7 9V17H2V11C2 9.89543 2.89543 9 4 9H7Z" fill="currentColor"/>
-                <path d="M7 2H17V9H7V2Z" fill="currentColor"/>
-              </svg>
-              PRINT
-            </Button>
+            <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
+              <img src={displayedSrc || stickerSource || ''} alt="Result sticker" className={styles.resultImage} />
+            </div>
+            <div className={styles.ctaSection}>
+              <button className={styles.printButton} onClick={printSticker}>PRINT</button>
+              <div className={styles.startOverSection}>
+                <button className={styles.startOverButton} onClick={onRestart}>START OVER</button>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Start Over Button */}
-        <div className={styles.startOverSection}>
-          <Button variant="text" onClick={onRestart || (() => window.location.reload())} className={styles.startOverButton}>
-            START OVER
-          </Button>
-        </div>
-
-        {providerError && (
-          <div className={styles.resultProviderError}>Generation fallback used: {String(providerError)}</div>
-        )}
       </div>
-    </div>
+    </MotionSection>
   );
 };
 

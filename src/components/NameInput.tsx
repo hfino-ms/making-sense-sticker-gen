@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import styles from './NameInput.module.css';
 import Button from './ui/Button';
+import MotionSection from './MotionSection';
 
 type Props = { onContinue: (name: string) => void };
 
@@ -16,7 +16,7 @@ const NameInput = ({ onContinue }: Props) => {
   };
 
   return (
-    <div className="screen-container">
+    <MotionSection animateKey="nameInput" duration={360} className="screen-container">
       <div className={styles.nameSection}>
         <div className={styles.nameContent}>
           <div className={styles.nameHeaderSection}>
@@ -45,7 +45,7 @@ const NameInput = ({ onContinue }: Props) => {
           </div>
         </div>
       </div>
-    </div>
+    </MotionSection>
   );
 };
 

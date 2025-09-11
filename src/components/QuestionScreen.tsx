@@ -3,7 +3,7 @@ import LinearSlider from './LinearSlider';
 import RadioListQuestion from './RadioListQuestion';
 import styles from './QuestionScreen.module.css';
 import Button from './ui/Button';
-import AnimatedSection from './AnimatedSection';
+import MotionSection from './MotionSection';
 import type { FC } from 'react';
 
 type Props = {
@@ -50,29 +50,32 @@ const QuestionScreen: FC<Props> = ({
     switch (layout) {
       case 'dial':
         return (
-          <AnimatedSection animateKey={`dial-${selected?.choice || getDialValue()}`} duration={260}>
+          // Do not wrap the interactive slider inside MotionSection to avoid reanimations during drag/click
+          <div className={styles.dialContainer}>
             <LinearSlider
               value={getDialValue()}
               onChange={handleDialChange}
             />
-          </AnimatedSection>
+          </div>
         );
 
       case 'radio-list':
         return (
-          <AnimatedSection animateKey={`radlist-${selected?.choice || ''}`} duration={260}>
+          // stable key per question to avoid reanimating on every selection change
+          <MotionSection animateKey={`radlist-${question.id}`} duration={260}>
             <RadioListQuestion
               options={question.options}
               selectedId={selected?.choice}
               onSelect={(optId) => onSelect(optId)}
             />
-          </AnimatedSection>
+          </MotionSection>
         );
 
       case 'icons':
       default:
         return (
-          <AnimatedSection animateKey={`icons-${selected?.choice || ''}`} duration={260}>
+          // stable key per question layout
+          <MotionSection animateKey={`icons-${question.id}`} duration={260}>
             <div className={styles.questionCardsContainer}>
               <div className={styles.questionOptions}>
                 {question.options.map((option) => (
@@ -94,7 +97,7 @@ const QuestionScreen: FC<Props> = ({
                 ))}
               </div>
             </div>
-          </AnimatedSection>
+          </MotionSection>
         );
     }
   };
@@ -104,7 +107,9 @@ const QuestionScreen: FC<Props> = ({
       <div className={styles.questionMain}>
         <div className={styles.questionSection}>
           <div className={styles.questionHeaderSection}>
-            <h1 className={styles.questionTitle}>{question.title}</h1>
+            <MotionSection animateKey={`title-${question.id}`} duration={900} className="question-title-motion">
+              <h1 className={styles.questionTitle}>{question.title}</h1>
+            </MotionSection>
           </div>
 
           {renderQuestionContent()}

@@ -21,27 +21,27 @@
   gap: 24px; /* exact gap from Figma */
   border-radius: 10px;
   background: #fff;
-  box-shadow: 0 50px 60px 0 rgba(6, 6, 6, 0.1);
+  box-shadow: 0 10px 20px 0 rgba(6, 6, 6, 0.1);
   border: none;
   cursor: pointer;
   text-align: left;
-  transition: all 0.2s ease;
+  transition: background 160ms ease, transform 120ms ease;
   flex-shrink: 0; /* prevent shrinking */
 }
 
 .radioOption:hover {
   transform: translateY(-2px);
-  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.15);
+  box-shadow: 0 10px 20px 0 rgba(6, 6, 6, 0.15);
 }
 
 .radioOptionSelected {
-  transform: translateY(-4px);
-  box-shadow: 0 60px 80px 0 rgba(6, 6, 6, 0.2);
+  box-shadow: 0 10px 20px 0 rgba(6, 6, 6, 0.15);
   background: linear-gradient(
     180deg,
     rgba(14, 204, 126, 0.08),
     rgba(83, 192, 210, 0.06)
   );
+  border: 2px solid rgba(0, 0, 0, 0.9); /* explicit black border for selected */
 }
 
 .radioButton {

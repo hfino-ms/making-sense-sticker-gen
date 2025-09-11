@@ -1,13 +1,13 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import styles from "./EmailCapture.module.css";
-import Button from "./ui/Button";
-import Divider from "./ui/Divider";
+import { useState, type FormEvent } from 'react';
+import styles from './EmailCapture.module.css';
+import Button from './ui/Button';
+import Divider from './ui/Divider';
+import MotionSection from './MotionSection';
 
 type Props = { onSubmit: (email: string) => void };
 
 const EmailCapture = ({ onSubmit }: Props) => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -17,16 +17,19 @@ const EmailCapture = ({ onSubmit }: Props) => {
   };
 
   return (
-    <div className={styles.emailScreen}>
+    <MotionSection animateKey="emailCapture" duration={360} className={styles.emailScreen}>
       <div className={styles.emailSection}>
-        <h1 className={styles.emailTitle}>Get Your AI Agent</h1>
+        <div className={styles.emailHeaderSection}>
+          <h1 className={styles.emailTitle}>Get Your AI Agent</h1>
 
-        <Divider />
+          <Divider />
 
-        <p className={styles.emailDescription}>
-          Enter your email address below, and we'll send your new AI Agent
-          directly to your inbox.
-        </p>
+          <p className={styles.emailDescription}>
+            Enter your email address below,
+            <br />
+            and we'll send your new AI Agent directly to your inbox.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className={styles.emailForm}>
           <div className={styles.emailInputWrapper}>
@@ -40,16 +43,12 @@ const EmailCapture = ({ onSubmit }: Props) => {
             />
           </div>
 
-          <Button
-            className={styles.emailSubmitButton}
-            type="submit"
-            variant="primary"
-          >
+          <Button className={styles.emailSubmitButton} type="submit" variant="primary">
             SUBMIT
           </Button>
         </form>
       </div>
-    </div>
+    </MotionSection>
   );
 };
 

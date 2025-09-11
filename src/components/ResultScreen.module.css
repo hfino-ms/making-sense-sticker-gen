@@ -1,4 +1,5 @@
-/* Result Screen - Figma Design Implementation */
+:root {
+}
 .resultContainer {
   display: flex;
   flex-direction: column;
@@ -98,8 +99,8 @@
 /* Sticker Container */
 .stickerContainer {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 220px;
+  height: 220px;
   flex-shrink: 0;
   margin: 0 auto;
   display: flex;
@@ -108,11 +109,109 @@
   aspect-ratio: 1/1;
 }
 
-.stickerImage {
+/* New: result image area (wrapper) and image styles with sticker-like effects */
+.resultImageArea {
+  position: relative; /* for pseudo elements */
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px; /* rounded sticker edge */
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+  overflow: visible;
+}
+
+/* visibility states to animate 'sticking' */
+.stickerHidden {
+  opacity: 0;
+  transform: translateY(-36px) rotate(-6deg) scale(0.94);
+  pointer-events: none;
+}
+
+.stickerVisible {
+  opacity: 1;
+  animation: stickIn 560ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.resultImage {
+  width: 80%;
+  height: 80%;
   object-fit: contain;
   display: block;
+  border-radius: 12px; /* inner rounding */
+  background: white; /* gives the sticker a white border area */
+  padding: 8px; /* reduce whitespace between edge and artwork */
+  box-sizing: border-box;
+  /* subtle sticker edge */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 260ms ease;
+}
+
+/* Slight lift on hover to feel tactile */
+.resultImageArea:hover .resultImage {
+  transform: translateY(-3px) rotate(-0.6deg);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+}
+
+@keyframes stickIn {
+  0% {
+    transform: translateY(-48px) rotate(-7deg) scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(8px) rotate(1deg) scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Glossy highlight to simulate laminate */
+.resultImageArea::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: -6%;
+  width: 80%;
+  height: 55%;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.35) 22%,
+    rgba(255, 255, 255, 0.06) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(-16deg);
+  border-radius: 40%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: blur(1px);
+  opacity: 0.9;
+}
+
+/* Small peeled corner indicator at top-right */
+.resultImageArea::before {
+  content: "";
+  position: absolute;
+  right: 6%;
+  top: 6%;
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.6) 40%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  border-radius: 6px;
+  transform: rotate(14deg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
 }
 
 .stickerPlaceholder {

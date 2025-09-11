@@ -3,7 +3,7 @@ import Webcam from 'react-webcam';
 import styles from './PhotoCapture.module.css';
 import Button from './ui/Button';
 import Divider from './ui/Divider';
-import AnimatedSection from './AnimatedSection';
+import MotionSection from './MotionSection';
 
 type Props = {
   onConfirm: (dataUrl?: string) => void;
@@ -97,7 +97,7 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
 
         {error && <div className={styles.errorBanner} role="alert">{error}</div>}
 
-        <AnimatedSection animateKey={`camera-${cameraStarted ? 'on' : 'off'}-${snapshot ? 'snap' : 'nosnap'}`} duration={360}>
+        <MotionSection animateKey={`camera-${cameraStarted ? 'on' : 'off'}-${snapshot ? 'snap' : 'nosnap'}`} duration={360}>
           <div className={styles.cameraContainer}>
             {cameraStarted && !snapshot && (
               <div className={styles.cameraFrame}>
@@ -143,7 +143,7 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
               </>
             )}
           </div>
-        </AnimatedSection>
+        </MotionSection>
       </div>
     </div>
   );

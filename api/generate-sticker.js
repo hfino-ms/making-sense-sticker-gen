@@ -28,10 +28,25 @@ export default async function handler(req, res) {
     const photoData = body.photo || null;
     console.log('generate-sticker: photo present?', Boolean(photoData), 'length:', photoData ? String(photoData).length : 0);
 
-    const gen = await generateImageFromPrompt(prompt, OPENAI_KEY, photoData);
-
-    // Return the raw generation result to the client for further composition
-    return res.status(200).json({ ok: true, gen, photoReceived: Boolean(photoData), photoLength: photoData ? String(photoData).length : 0 });
+    try {
+      const gen = await generateImageFromPrompt(prompt, OPENAI_KEY, photoData);
+      // Return the raw generation result to the client for further composition
+      return res.status(200).json({ ok: true, gen, photoReceived: Boolean(photoData), photoLength: photoData ? String(photoData).length : 0 });
+    } catch (genErr) {
+      console.error('generate-sticker: generation error', genErr);
+      // Handle OpenAI billing or user errors gracefully
+      const code = genErr?.code || genErr?.error?.code || null;
+      const message = genErr?.message || genErr?.error?.message || 'Image generation failed';
+      if (code === 'billing_hard_limit_reached' || /billing/i.test(message)) {
+        return res.status(402).json({ error: 'OpenAI billing limit reached', code, message });
+      }
+      // For rate limits or bad requests surface proper status
+      if (code === 'rate_limit_exceeded' || /rate limit/i.test(message)) {
+        return res.status(429).json({ error: 'OpenAI rate limit exceeded', code, message });
+      }
+      // Otherwise return a generic 500 with minimal info
+      return res.status(500).json({ error: message });
+    }
   } catch (err) {
     console.error('generate-sticker error', err);
     return res.status(500).json({ error: String(err?.message || err) });
