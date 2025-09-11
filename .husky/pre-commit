@@ -4,3 +4,4 @@
 # Run lint-staged to auto-fix staged files, then run full precommit checks
 npx lint-staged
 npm run precommit
+npx lint-staged && npm run precommit
