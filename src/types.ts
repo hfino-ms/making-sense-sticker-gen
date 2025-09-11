@@ -22,9 +22,18 @@ export type Agent = {
 };
 
 export type GenerationResult = {
-  imageUrl: string; // data URL or remote URL
+  imageUrl?: string; // data URL or remote URL
+  imageDataUrl?: string; // optional data URL when composed
   agent?: Agent | null;
+  archetype?: Archetype | null;
   prompt?: string;
   source?: 'openai' | 'fallback';
   providerError?: string | null;
+};
+
+export type Archetype = Agent & {
+  backgroundStyle?: string;
+  robotType?: string;
+  robotPose?: string;
+  colorPalette?: string;
 };

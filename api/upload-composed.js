@@ -21,9 +21,8 @@ export default async function handler(req, res) {
     const b64 = matches[3];
     const buffer = Buffer.from(b64, 'base64');
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET || 'stickers';
+    const { getSupabaseConfig } = await import('./services/configService.js');
+    const { url: SUPABASE_URL, key: SUPABASE_KEY, bucket: SUPABASE_BUCKET } = getSupabaseConfig();
 
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error('upload-composed: missing SUPABASE_URL or SUPABASE_KEY, envs present:', {

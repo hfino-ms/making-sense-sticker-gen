@@ -123,7 +123,7 @@ function App() {
     setUserEmail(email);
     // Delegate generation preparation to workflow service
     try {
-      const { agent, prompt } = await preparePromptAndAgent(answers, capturedPhoto);
+      const { agent, prompt } = await preparePromptAndAgent(answers, Boolean(capturedPhoto));
       setAgentResult(agent);
       setPromptText(prompt);
       setStep(STEPS.PromptPreview);
@@ -341,7 +341,7 @@ function App() {
           }}
           onRegenerate={async () => {
             try {
-              const { prompt } = await preparePromptAndAgent(answers, capturedPhoto);
+              const { prompt } = await preparePromptAndAgent(answers, Boolean(capturedPhoto));
               setPromptText(prompt);
             } catch (e) { console.warn('Failed to regenerate prompt', e); }
           }}

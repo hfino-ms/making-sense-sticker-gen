@@ -9,7 +9,8 @@ export default async function handler(req, res) {
 
     if (!agent || !agent.name) return res.status(400).json({ error: 'Missing required field: agent.name' });
 
-    const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY;
+    const { getOpenAIKey } = await import('./services/configService.js');
+    const OPENAI_KEY = getOpenAIKey();
     if (!OPENAI_KEY) return res.status(500).json({ error: 'Server missing OPENAI_API_KEY' });
 
     // Build a prompt inspired by the previous implementation
