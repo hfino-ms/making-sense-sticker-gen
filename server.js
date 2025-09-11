@@ -3,14 +3,22 @@ dotenv.config();
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
-import submitUserDataHandler from './api/submit-user-data.js';
-import uploadImageHandler from './api/upload-image.js';
-import generateImageHandler from './api/generate-image.js';
 
+// Minimal static server: no API routes, no outbound fetches.
 const app = express();
-app.use(express.json({ limit: '50mb' }));
 
-// Ensure uploads directory exists and serve it publicly at /uploads
+// Simple CORS handling so frontend running on different port can call API during dev
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Serve public/uploads if present
 const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 try {
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -19,59 +27,39 @@ try {
   console.warn('Could not create or serve uploads directory', e);
 }
 
-// Mount submit-user-data API at top level so frontend requests to /api/submit-user-data are handled
-app.post('/api/submit-user-data', async (req, res) => submitUserDataHandler(req, res));
-// Mount upload-image endpoint
-app.post('/api/upload-image', async (req, res) => uploadImageHandler(req, res));
-
-
-
-
-
-app.post('/api/generate-image', (req, res) => generateImageHandler(req, res));
-
-
-// Test endpoint to ping configured n8n webhook from the server
-app.post('/api/test-n8n', async (req, res) => {
-  try {
-    const configuredN8n = process.env.N8N_WEBHOOK_URL || 'https://nano-ms.app.n8n.cloud/webhook-test/sticker-app';
-    const payload = req.body && Object.keys(req.body).length ? req.body : { test: 'ping', timestamp: new Date().toISOString() };
-    console.log('Server test-n8n: calling', configuredN8n);
-    const headers = { 'Content-Type': 'application/json' };
-    const n8nAuth = process.env.N8N_WEBHOOK_AUTH || null;
-    if (n8nAuth) headers['Authorization'] = String(n8nAuth);
-    const resp = await fetch(configuredN8n, { method: 'POST', headers, body: JSON.stringify(payload) });
-    const text = await resp.text().catch(() => '');
-    return res.status(200).json({ ok: resp.ok, status: resp.status, statusText: resp.statusText, body: text });
-  } catch (e) {
-    console.error('test-n8n error', e);
-    return res.status(500).json({ error: String(e?.message || e) });
-  }
+// Small API request logger for debugging
+app.use('/api', (req, res, next) => {
+  try { console.log('API request', req.method, req.originalUrl); } catch (e) {}
+  next();
 });
 
-// Image proxy to convert external image URLs to data URLs to avoid CORS when composing canvas
-app.post('/api/proxy-image', async (req, res) => {
-  try {
-    const { url } = req.body || {};
-    if (!url) return res.status(400).json({ error: 'Missing url' });
-    // Basic validation: only allow http/https
-    if (!/^https?:\/\//i.test(url)) return res.status(400).json({ error: 'Invalid url' });
+// Ping endpoint to verify API reachability
+app.get('/api/ping', (req, res) => res.json({ ok: true, time: Date.now() }));
 
-    const resp = await fetch(url);
-    if (!resp.ok) return res.status(502).json({ error: 'Failed to fetch target image', status: resp.status });
-    const buf = await resp.arrayBuffer();
-    const contentType = resp.headers.get('content-type') || 'image/png';
-    const b64 = Buffer.from(buf).toString('base64');
-    const dataUrl = `data:${contentType};base64,${b64}`;
-    return res.json({ dataUrl });
-  } catch (err) {
-    console.error('Proxy image error', err);
-    return res.status(500).json({ error: String(err?.message || err) });
-  }
-});
+// Mount generate-sticker endpoint (generates image via OpenAI)
+try {
+  const generateSticker = await import('./api/generate-sticker.js');
+  app.post('/api/generate-sticker', express.json({ limit: '10mb' }), (req, res) => generateSticker.default(req, res));
+} catch (e) {
+  console.warn('generate-sticker API not available', e);
+}
 
+// Mount upload-composed endpoint (accepts composed dataURL, uploads to Supabase, triggers n8n)
+try {
+  const uploadComposed = await import('./api/upload-composed.js');
+  app.post('/api/upload-composed', express.json({ limit: '50mb' }), (req, res) => uploadComposed.default(req, res));
+} catch (e) {
+  console.warn('upload-composed API not available', e);
+}
 
-// Serve static built site if present, otherwise fall back to project index.html (development)
+// Mount send-to-n8n endpoint for manually posting payloads to n8n
+try {
+  const sendToN8n = await import('./api/send-to-n8n.js');
+  app.post('/api/send-to-n8n', express.json({ limit: '1mb' }), (req, res) => sendToN8n.default(req, res));
+} catch (e) {
+  console.warn('send-to-n8n API not available', e);
+}
+
 const distPath = path.join(process.cwd(), 'dist');
 const distIndex = path.join(distPath, 'index.html');
 const rootIndex = path.join(process.cwd(), 'index.html');
@@ -80,22 +68,16 @@ if (fs.existsSync(distIndex)) {
   app.use(express.static(distPath));
   app.get('*', (req, res) => res.sendFile(distIndex));
 } else if (fs.existsSync(rootIndex)) {
-  // In dev mode serve the project index.html directly
   app.get('*', (req, res) => res.sendFile(rootIndex));
 } else {
-  // No index available
   app.get('*', (req, res) => res.status(404).send('Not Found'));
 }
 
 const port = process.env.PORT || 3000;
 const server = app.listen(port, () => console.log(`Server listening on ${port}`));
-// Disable automatic timeouts so long-running provider requests can complete
-if (server && typeof server.setTimeout === 'function') {
-  server.setTimeout(0); // 0 = no timeout
-  console.log('Server timeout disabled to allow long-running provider requests');
-}
+if (server && typeof server.setTimeout === 'function') server.setTimeout(0);
 
-// In development, spawn Vite dev server so API + front run together
+// Start Vite in dev (same behavior as before)
 if (process.env.NODE_ENV !== 'production' && process.env.SPAWN_VITE !== 'false') {
   try {
     const { spawn } = await import('child_process');

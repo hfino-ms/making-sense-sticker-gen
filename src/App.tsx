@@ -8,12 +8,11 @@ import PhotoCapture from './components/PhotoCapture';
 import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
 import ErrorBanner from './components/ErrorBanner';
+import SuccessBanner from './components/SuccessBanner';
 import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
-import { deriveArchetype } from './utils/archetype';
-import { generateSticker } from './services/imageService';
-import { composeStickerFromSource } from './utils/composeSticker';
-import { buildPromptFromAnswers } from './utils/prompt';
+import PromptPreview from './components/PromptPreview';
+import { preparePromptAndAgent, generateAndCompose, submitComposed } from './services/workflowClient';
 
 const STEPS = {
   Splash: 0,
@@ -35,10 +34,13 @@ function App() {
   const [answers, setAnswers] = useState<Answers>({});
   const [questionIndex, setQuestionIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | undefined>(undefined);
 
-  const [generatedArchetype, setGeneratedArchetype] = useState<any | null>(null);
+  const [agentResult, setAgentResult] = useState<{ key: string; name: string } | null>(null);
+  const [promptText, setPromptText] = useState<string>('');
+  const [generating, setGenerating] = useState<boolean>(false);
 
   const currentQuestion = QUESTIONS[questionIndex];
   const total = QUESTIONS.length;
@@ -119,23 +121,28 @@ function App() {
 
   const handleEmailSubmit = async (email: string) => {
     setUserEmail(email);
-    // Now start generation process after email is captured
-    await generateStickerAfterEmail();
+    // Delegate generation preparation to workflow service
+    try {
+      const { agent, prompt } = await preparePromptAndAgent(answers, capturedPhoto);
+      setAgentResult(agent);
+      setPromptText(prompt);
+      setStep(STEPS.PromptPreview);
+    } catch (e: any) {
+      console.error('Failed to prepare prompt and agent', e);
+      setError(String(e?.message || e));
+      setStep(STEPS.Splash);
+    }
   };
 
   const submitUserData = async () => {
     try {
-      // Build survey payload
       const surveyObj: Record<string, string> = {};
       try {
         QUESTIONS.forEach((q, idx) => {
           const slot = idx + 1;
           surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
           const ans = (answers || {})[q.id];
-          if (!ans) {
-            surveyObj[`answer_${slot}`] = '';
-            return;
-          }
+          if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
           if (typeof ans === 'object') {
             const choiceId = ans.choice;
             const opt = q.options?.find((o: any) => o.id === choiceId);
@@ -144,78 +151,68 @@ function App() {
             surveyObj[`answer_${slot}`] = String(ans);
           }
         });
-      } catch (e) {
-        console.warn('Failed to build survey payload on client', e);
-      }
+      } catch (e) { console.warn('Failed to build survey payload on client', e); }
 
-      // Compose sticker (with frame)
-      let stickerDataUrl = (result as any)?.imageDataUrl || (result as any)?.imageUrl || null;
-      try {
-        const composed = await composeStickerFromSource((result as any)?.imageDataUrl || (result as any)?.imageUrl || null);
-        if (composed) stickerDataUrl = composed;
-      } catch (e) {
-        console.warn('Failed to compose sticker on client before submit', e);
-      }
-
-      // Ensure sticker is a public URL. If we have a data URL, upload it to server which returns a public URL.
-      let stickerUrl = stickerDataUrl;
-      try {
-        if (stickerDataUrl && String(stickerDataUrl).startsWith('data:')) {
-          const uploadResp = await fetch('/api/upload-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dataUrl: stickerDataUrl })
-          });
-          if (uploadResp.ok) {
-            const ujson = await uploadResp.json().catch(() => null);
-            if (ujson && ujson.url) stickerUrl = ujson.url;
-            else {
-              console.warn('Upload endpoint returned no url', ujson);
-            }
-          } else {
-            const txt = await uploadResp.text().catch(() => '');
-            console.warn('Upload endpoint failed', uploadResp.status, txt);
-            // surface server error to UI
-            setError(`Upload failed: ${uploadResp.status} ${txt}`);
-            setStep(STEPS.Result);
-            return;
-          }
-
-          // If after upload attempt stickerUrl is still a data URL, abort and inform user
-          if (stickerUrl && String(stickerUrl).startsWith('data:')) {
-            console.error('Sticker upload did not return a public URL. Aborting payload send.');
-            setError('No se pudo subir la imagen al servidor. Intenta nuevamente.');
-            setStep(STEPS.Result);
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to upload composed sticker before payload', e);
-        setError(`Upload failed: ${String((e as any)?.message || e)}`);
+      const stickerDataUrl = (result as any)?.imageDataUrl || (result as any)?.imageUrl || null;
+      if (!stickerDataUrl) {
+        setError('No sticker image available to submit');
         setStep(STEPS.Result);
+        return;
       }
 
-      const payload = {
-        email: userEmail || '',
-        name: userName || '',
-        timestamp: new Date().toISOString(),
-        sticker: stickerUrl,
-        archetype: generatedArchetype?.name || (result as any)?.archetype?.name || generatedArchetype || (result as any)?.archetype || null,
-        survey: surveyObj
-      };
+      try {
+        const resp = await submitComposed({
+          email: userEmail || '',
+          name: userName || '',
+          timestamp: new Date().toISOString(),
+          agent: agentResult || (result as any)?.agent || null,
+          survey: surveyObj,
+          photo: capturedPhoto || '',
+          composedDataUrl: stickerDataUrl
+        });
 
-      console.log('Submitting payload to /api/submit-user-data:', payload);
-      const resp = await fetch('/api/submit-user-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!resp.ok) {
-        const txt = await resp.text().catch(() => '');
-        console.error('Server responded with error when submitting payload:', resp.status, txt);
-      } else {
-        const json = await resp.json().catch(() => null);
-        console.log('Server submit response:', json);
+        if (!resp || !resp.ok) {
+          setError(`Submission failed: ${JSON.stringify(resp)}`);
+          setStep(STEPS.Result);
+          return;
+        }
+
+        // resp should contain imageUrl. Compose payload and send to n8n via backend helper
+        const imageUrl = resp.imageUrl || resp?.image || resp?.url || null;
+        if (!imageUrl) {
+          setError('Upload succeeded but no imageUrl returned');
+          setStep(STEPS.Result);
+          return;
+        }
+
+        try {
+          const { sendToN8nFromClient } = await import('./services/submitClient');
+          const webhookPayload = {
+            email: userEmail || '',
+            name: userName || '',
+            timestamp: new Date().toISOString(),
+            sticker: imageUrl,
+            photo: capturedPhoto || '',
+            archetype: (agentResult as any)?.name || (agentResult as any)?.key || null,
+            survey: surveyObj
+          };
+          const hookResp = await sendToN8nFromClient(webhookPayload);
+          console.log('n8n webhook response', hookResp);
+
+          // Show success banner to the user
+          setSuccessMessage("Success — we've sent your agent to your email. Please check your inbox.");
+          setTimeout(() => setSuccessMessage(null), 8000);
+        } catch (hookErr) {
+          console.warn('Failed to send n8n webhook from client', hookErr);
+          setError('Failed to notify via webhook');
+        }
+
+        console.log('Submission successful', resp);
+      } catch (e) {
+        console.error('Error submitting user data:', e);
+        setError(String((e as any)?.message || e));
+        setStep(STEPS.Result);
+        return;
       }
     } catch (error) {
       console.error('Error submitting user data to server:', error);
@@ -229,29 +226,6 @@ function App() {
     setStep(STEPS.EmailCapture);
   };
 
-  // Generate sticker after email is captured
-  const generateStickerAfterEmail = async () => {
-    setError(null);
-    try {
-      if (!navigator.onLine) throw new Error('No internet connection. Please connect to continue.');
-
-      // Build a deterministic archetype from answers and generate a concise prompt using the dedicated util
-      const fallbackArche = deriveArchetype(answers);
-      setGeneratedArchetype(fallbackArche);
-
-      const arche = generatedArchetype ?? fallbackArche;
-      const promptToUse = buildPromptFromAnswers(arche, answers);
-
-      setStep(STEPS.Generating);
-      const photoStep = capturedPhoto ? 'sent' : 'skipped';
-      const res = await generateSticker(arche, capturedPhoto, promptToUse, photoStep);
-      setResult(res);
-      setStep(STEPS.Result);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to prepare or generate sticker');
-      setStep(STEPS.Splash);
-    }
-  };
 
   const submitAndStay = async () => {
     await submitUserData();
@@ -282,6 +256,7 @@ function App() {
       onClose={handleCloseQuestions}
     >
       {error && <ErrorBanner>{error}</ErrorBanner>}
+      {successMessage && <SuccessBanner>{successMessage}</SuccessBanner>}
 
       {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
       {step === STEPS.NameInput && <NameInput onContinue={(name) => { setUserName(name); setStep(STEPS.Questions); }} />}
@@ -305,7 +280,75 @@ function App() {
       )}
 
       {step === STEPS.Generating && <LoadingScreen />}
-      {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
+      {step === STEPS.PromptPreview && (
+        <PromptPreview
+          archetype={agentResult as any}
+          prompt={promptText}
+          onChange={(s: string) => setPromptText(s)}
+          onGenerate={async () => {
+            setGenerating(true);
+            try {
+              const surveyPayload: Record<string,string> = (() => {
+                const surveyObj: Record<string,string> = {};
+                try {
+                  QUESTIONS.forEach((q, idx) => {
+                    const slot = idx + 1;
+                    surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
+                    const ans = (answers || {})[q.id];
+                    if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
+                    if (typeof ans === 'object') {
+                      const choiceId = ans.choice;
+                      const opt = q.options?.find((o: any) => o.id === choiceId);
+                      surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
+                    } else {
+                      surveyObj[`answer_${slot}`] = String(ans);
+                    }
+                  });
+                } catch (e) { console.warn('Failed to build survey payload', e); }
+                return surveyObj;
+              })();
+
+              setStep(STEPS.Generating);
+              const out = await generateAndCompose(agentResult || null, surveyPayload, capturedPhoto);
+
+              if (!out || (!out.gen)) {
+                setError('No generation data returned from server');
+                setStep(STEPS.Result);
+                return;
+              }
+
+              if (out.composedDataUrl) {
+                setResult({ imageDataUrl: out.composedDataUrl, agent: agentResult as any, prompt: promptText, source: 'openai' });
+                setStep(STEPS.Result);
+              } else if (out.source) {
+                if (out.source.startsWith('data:')) {
+                  setResult({ imageDataUrl: out.source, agent: agentResult as any, prompt: promptText, source: 'openai' });
+                } else {
+                  setResult({ imageUrl: out.source, agent: agentResult as any, prompt: promptText, source: 'openai' });
+                }
+                setStep(STEPS.Result);
+              } else {
+                setError('OpenAI returned no image data');
+                setStep(STEPS.Result);
+              }
+            } catch (e: any) {
+              console.error('Failed to call generation service', e);
+              setError(String(e?.message || e));
+              setStep(STEPS.Result);
+            } finally {
+              setGenerating(false);
+            }
+          }}
+          onRegenerate={async () => {
+            try {
+              const { prompt } = await preparePromptAndAgent(answers, capturedPhoto);
+              setPromptText(prompt);
+            } catch (e) { console.warn('Failed to regenerate prompt', e); }
+          }}
+          loading={generating}
+        />
+      )}
+      {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
     </Layout>
   );
 }

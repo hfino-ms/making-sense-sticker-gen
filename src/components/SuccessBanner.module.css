@@ -1,0 +1,5 @@
+.successBanner { background: rgba(30, 221, 142, 0.08); color: #0b8f66; padding: 10px 14px; border-radius: 8px; width: 100%; box-sizing: border-box; font-weight: 600; }
+
+@media (min-width: 769px) {
+  .successBanner { padding: 12px 16px; }
+}

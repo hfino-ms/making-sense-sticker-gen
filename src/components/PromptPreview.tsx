@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import type { Archetype } from '../types';
+import type { Agent } from '../types';
 import tokens from '../styles/tokens.module.css';
 import styles from './PromptPreview.module.css';
 import Button from './ui/Button';
 
 type Props = {
-  archetype: Archetype;
+  archetype: Agent;
   prompt: string;
   onChange: (newPrompt: string) => void;
   onGenerate: () => void;

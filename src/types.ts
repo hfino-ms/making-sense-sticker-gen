@@ -14,20 +14,17 @@ export type Question = {
 
 export type Answers = Record<string, { choice: string; intensity?: number }>;
 
-export type Archetype = {
+export type Agent = {
+  key: string;
   name: string;
-  descriptor: string;
-  valueLine: string;
-  backgroundStyle: string;
-  robotType: string;
-  robotPose: string;
-  colorPalette: string;
+  descriptor?: string;
+  valueLine?: string;
 };
 
 export type GenerationResult = {
   imageUrl: string; // data URL or remote URL
-  archetype: Archetype;
-  prompt: string;
+  agent?: Agent | null;
+  prompt?: string;
   source?: 'openai' | 'fallback';
   providerError?: string | null;
 };

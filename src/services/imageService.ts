@@ -18,13 +18,13 @@ async function dataUrlToBlob(dataUrl: string) {
 // Try requesting generation from server-side endpoint first (more reliable)
 async function generateViaServer(prompt: string, selfieDataUrl?: string): Promise<string> {
   try {
-    const resp = await fetch('/api/generate-image', {
+    const resp = await fetch('/api/generate-sticker', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-source': 'ui'
       },
-      body: JSON.stringify({ prompt, selfieDataUrl }),
+      body: JSON.stringify({ prompt, photo: selfieDataUrl }),
     });
 
     const json = await resp.json();

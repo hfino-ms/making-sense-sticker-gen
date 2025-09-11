@@ -33,7 +33,7 @@ const EmailCapture = ({ onSubmit }: Props) => {
           </svg>
         </div>
             
-        <p className={styles.emailHelper}>We’ll send you your sticker and the resulting archetype by email.</p>
+        <p className={styles.emailHelper}>We’ll send you your sticker and the resulting agent by email.</p>
 
         <p className={styles.emailDescription}>
           Enter your email address below,

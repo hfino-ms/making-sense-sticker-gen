@@ -1,7 +1,7 @@
 import type { GenerationResult } from '../types';
 import styles from './ResultScreen.module.css';
 import Button from './ui/Button';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { composeStickerFromSource } from '../utils/composeSticker';
 import type { FC } from 'react';
 
@@ -9,25 +9,57 @@ type Props = {
   result: GenerationResult;
   userName?: string;
   userEmail?: string;
+  agent?: { key: string; name: string } | null;
   onShare: () => void;
   onPrint: () => void;
   onRestart?: () => void;
 };
 
-const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart }) => {
-  const { archetype, imageUrl } = result as any;
+const ResultScreen: FC<Props> = ({ result, userName, agent, onShare, onPrint, onRestart }) => {
+  const imageUrl = (result as any)?.imageUrl || '';
+  // Determine agent info: prefer result.agent, fallback to prop 'agent'
+  const resultAgent = (result as any)?.agent || agent || null;
   // Use the frame URL directly - no complex composition
-  // Choose sticker source (prefer server-provided full image URL or data URL)
   const stickerSource = (result as any)?.imageDataUrl || imageUrl;
 
+  // displayedSrc will hold the final composed image dataURL when available
+  const [displayedSrc, setDisplayedSrc] = useState<string | null>(stickerSource || null);
+
   // Compose sticker for export (include frame overlay) — wrap the shared util
-  const composeSticker = async (): Promise<string> => {
-    return composeStickerFromSource(stickerSource);
+  const composeSticker = async (source?: string): Promise<string> => {
+    return composeStickerFromSource(source || stickerSource);
   };
 
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const downloadRef = useRef<HTMLAnchorElement | null>(null);
+
+  // Try composing on mount so the final screen shows the composed sticker with frame
+  // Avoid composing if stickerSource is already a data URL (assume it's already composed or baked)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!stickerSource) return;
+      try {
+        if (String(stickerSource).startsWith('data:')) {
+          // already a data URL — assume composed or baked in; do not re-compose to avoid double overlay
+          if (mounted) setDisplayedSrc(stickerSource);
+          return;
+        }
+
+        const composed = await composeSticker(stickerSource);
+        if (mounted && composed) {
+          setDisplayedSrc(composed);
+        }
+      } catch (e) {
+        console.warn('ResultScreen: failed to compose sticker on mount', e);
+        // leave displayedSrc as original
+        if (mounted) setDisplayedSrc(stickerSource || null);
+      }
+    })();
+    return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stickerSource]);
 
   const composeAndGetDataUrl = async (): Promise<string> => {
     try {
@@ -49,7 +81,7 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
     const a = downloadRef.current;
     if (!a) return;
     a.href = previewSrc;
-    a.download = `${archetype?.name || 'sticker'}.png`;
+    a.download = `${resultAgent?.name || 'sticker'}.png`;
     a.click();
   };
 
@@ -77,7 +109,7 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
       outSrc = stickerSource;
     }
 
-    w.document.write(`<html><head><title>${archetype.name} Sticker</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff;">
+    w.document.write(`<html><head><title>${resultAgent?.name || 'Agent'} Sticker</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;background:#fff;">
       <img src="${outSrc}" style="max-width:90vw;max-height:90vh;object-fit:contain;"/>
       <script>window.onload=function(){setTimeout(function(){window.print();}, 300)}<\/script>
     </body></html>`);
@@ -95,7 +127,7 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
   return (
     <div className={styles.resultContainer}>
       <div className={styles.resultSection}>
-        <h1 className={styles.resultTitle}>{userName ? `${userName}, you are a ${archetype.name}!` : `You are ${archetype.name}!`}</h1>
+        <h1 className={styles.resultTitle}>{userName ? `${userName}, you are a ${resultAgent?.name || 'Agent'}!` : `You are ${resultAgent?.name || 'Agent'}!`}</h1>
 
         <div className={styles.resultDivider}>
           <div className={styles.dividerLine}></div>
@@ -111,35 +143,46 @@ const ResultScreen: FC<Props> = ({ result, userName, onShare, onPrint, onRestart
         </div>
 
         <div className={styles.resultDescription}>
-          <p className={styles.resultLine1}>{archetype.descriptor}</p>
-          <p className={styles.resultLine2}>{archetype.valueLine}</p>
+          <p className={styles.resultLine1}>{resultAgent?.descriptor}</p>
+          <p className={styles.resultLine2}>{resultAgent?.valueLine}</p>
         </div>
 
         {providerError && (
           <div className={styles.resultProviderError}>Generation fallback used: {String(providerError)}</div>
         )}
 
-        {/* Archetype label layer (text) */}
-        <div className={styles.archetypeLabel}>{archetype?.name}</div>
+        {/* Agent badge calculated from survey answers */}
+        {resultAgent && (
+          <div className={styles.agentBadge}>
+            <strong>Agent:</strong> {resultAgent.name}
+          </div>
+        )}
+
+        {/* Agent label layer (text) */}
+        <div className={styles.archetypeLabel}>{resultAgent?.name}</div>
 
         {/* Sticker display contained within a frame overlay */}
         <div className={styles.stickerContainer}>
           <div className={styles.stickerInner}>
-            {stickerSource ? (
+            {displayedSrc ? (
+              <img src={displayedSrc} alt="Sticker" className={styles.stickerImage} />
+            ) : stickerSource ? (
               <img src={stickerSource} alt="Sticker" className={styles.stickerImage} />
             ) : (
               <div className={styles.stickerPlaceholder} />
             )}
           </div>
 
-          {/* Frame overlay (decorative) */}
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000"
-            srcSet="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=1000 1x, https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000 2x"
-            alt="frame"
-            className={styles.frameOverlay}
-            decoding="async"
-          />
+          {/* Frame overlay (decorative) only when sticker is not pre-composed */}
+          {!(displayedSrc && displayedSrc.startsWith('data:')) && (
+            <img
+              src="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000"
+              srcSet="https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=1000 1x, https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000 2x"
+              alt="frame"
+              className={styles.frameOverlay}
+              decoding="async"
+            />
+          )}
         </div>
 
         <div className={styles.resultButtons}>
