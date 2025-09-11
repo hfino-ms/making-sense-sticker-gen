@@ -1,32 +1,76 @@
-import fetch from 'node-fetch';
-import crypto from 'crypto';
+import fetch from "node-fetch";
+import crypto from "crypto";
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
   try {
     const body = req.body || {};
     const { agent, survey, variant } = body;
 
-    if (!agent || !agent.name) return res.status(400).json({ error: 'Missing required field: agent.name' });
+    if (!agent || !agent.name)
+      return res
+        .status(400)
+        .json({ error: "Missing required field: agent.name" });
 
-    const { getOpenAIKey } = await import('./services/configService.js');
+    const { getOpenAIKey } = await import("./services/configService.js");
     const OPENAI_KEY = getOpenAIKey();
-    if (!OPENAI_KEY) return res.status(500).json({ error: 'Server missing OPENAI_API_KEY' });
+    if (!OPENAI_KEY)
+      return res.status(500).json({ error: "Server missing OPENAI_API_KEY" });
 
     // Build a prompt inspired by the previous implementation
-    const q1 = (survey && survey.answer_1) || '';
-    const q2 = (survey && survey.answer_2) || '';
-    const q3 = (survey && survey.answer_3) || '';
-    const q4 = (survey && survey.answer_4) || '';
-    const q5 = (survey && survey.answer_5) || '';
+    const q1 = (survey && survey.answer_1) || "";
+    const q2 = (survey && survey.answer_2) || "";
+    const q3 = (survey && survey.answer_3) || "";
+    const q4 = (survey && survey.answer_4) || "";
+    const q5 = (survey && survey.answer_5) || "";
 
-    let prompt = `Create an original, unique sticker that embodies the concept "${agent.name}". Avoid using any label, any text in the image, white borders, or transparent background. Draw inspiration from the following traits: When evaluating a potential investment, how do you typically approach decision-making?: ${q1}; When a new technology emerges in the market, how do you respond?: ${q2}; When considering a new opportunity, what best describes your risk tolerance?: ${q3}; When working with portfolio company teams, what's your default style?: ${q4}; When defining a growth plan for a portfolio company, which area do you prioritize first?: ${q5}. Produce a high-quality, visually engaging sticker concept — be creative with composition. Colors should be green, blue, purple, white and black. The design should feature a character in the middle with small illustrations in the background. The character should have proportionally sized eyes, mouth, ears, and nose on its face. The background should fill the complete image and should be only one color. The style should be clean, simple, flat, with no text on it.`;
+    let prompt = `Create an original, unique image that represents the archetype "${agent.name}" using only the predefined traits and archetype description as inspiration.
+Style:
+- Flat, clean, simple, modern illustration style.
+- One central stylized character placed in the middle, with proportionate eyes, mouth, ears, and nose.
+- The character should look neutral-to-positive, never angry.
+- The background must be a single solid color: white, blue, or purple.
+- Use only the following palette for character and elements: green, blue, purple, white, black.
+- Add small, abstract illustrations in the background to suggest the archetype's traits and personality (e.g., balance, transformation, vision, collaboration, opportunity spotting).
+- Avoid cultural or identity-specific symbols.
+- Do not include any text, copy, archetype name, labels, logos, brands, or decorative borders.
+- Do not use transparent or green backgrounds.
+Archetype Guidelines:
+- Archetype name: ${agent.name}
+- Do not literalize the name (e.g., no hunters, no weapons). Instead, represent personality and strengths conceptually:
+  • The Deal Hunter → abstract elements of agility, market scanning, opportunity-finding.
+  • The Risk Balancer → balance, stability, protective shapes.
+  • The Transformer → motion, change, gears, progress.
+  • The Visionary → guiding light rays, dynamic upward trajectories, stylized celestial patterns, and unfolding future-forward pathways.
+  • The Integrator → connected shapes, networks, collaboration.
+Traits (predefined inputs to inspire the concept):
+- Decision-making: ${q1}
+- Tech response: ${q2}
+- Risk tolerance: ${q3}
+- Team style: ${q4}
+- Growth priority: ${q5}
+Optional Photo:
+- If a photo is provided and consented, use only the silhouette or pose as loose inspiration.
+- Render the character in a stylized, flat manner with abstract tones, not realistic likeness or skin color.
+- Do not copy distinctive features, clothing logos, or backgrounds from the photo.
+- If a photo is not provided, do not use "skin tone" color for the character's skin.
+Do not literalize the name (e.g., no hunters, no weapons). Instead, represent personality and strengths conceptually
+Output:
+Produce one high-quality, visually engaging image that combines the archetype's conceptual personality with the selected traits, in the defined style and palette.`;
 
     if (variant) prompt += ` VariantToken:${variant}`;
 
-    const { generateImageFromPrompt } = await import('./services/openaiService.js');
+    const { generateImageFromPrompt } = await import(
+      "./services/openaiService.js"
+    );
     const photoData = body.photo || null;
-    console.log('generate-sticker: photo present?', Boolean(photoData), 'length:', photoData ? String(photoData).length : 0);
+    console.log(
+      "generate-sticker: photo present?",
+      Boolean(photoData),
+      "length:",
+      photoData ? String(photoData).length : 0
+    );
 
     try {
       const gen = await generateImageFromPrompt(prompt, OPENAI_KEY, photoData);
@@ -48,7 +92,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: message });
     }
   } catch (err) {
-    console.error('generate-sticker error', err);
+    console.error("generate-sticker error", err);
     return res.status(500).json({ error: String(err?.message || err) });
   }
 }

@@ -265,7 +265,6 @@
 /* Start Over Section */
 .startOverSection {
   position: static; /* participate in normal flow */
-  margin-top: 8px;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -343,7 +342,7 @@
 @media (max-width: 480px) {
   .resultSection {
     padding: 80px 16px 40px;
-    gap: 80px;
+    gap: 20px;
   }
 
   .heroContent {
@@ -373,6 +372,9 @@
 
   .startOverSection {
     bottom: 40px;
+  }
+  .heroSection {
+    gap: 30px;
   }
 }
 

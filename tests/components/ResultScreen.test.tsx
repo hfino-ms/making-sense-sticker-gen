@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup } from "@testing-library/react";
+import { render, cleanup, waitFor } from "@testing-library/react";
 import { JSDOM } from "jsdom";
 import ResultScreen from "../../src/components/ResultScreen";
 
@@ -55,8 +55,10 @@ describe("ResultScreen auto-submit guard", () => {
       ) as any
     );
 
-    // first mount should call onShare once
-    expect(onShare).toHaveBeenCalledTimes(1);
+    // Wait for the async effect to call onShare
+    await waitFor(() => {
+      expect(onShare).toHaveBeenCalledTimes(1);
+    });
 
     // unmount and remount with same result
     unmount();
@@ -71,6 +73,8 @@ describe("ResultScreen auto-submit guard", () => {
     );
 
     // still only called once
-    expect(onShare).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onShare).toHaveBeenCalledTimes(1);
+    });
   });
 });
