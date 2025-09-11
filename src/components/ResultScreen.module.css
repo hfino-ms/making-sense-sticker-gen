@@ -52,6 +52,9 @@
   font-weight: 700;
   line-height: 52px; /* 108.333% */
   width: 100%;
+  /* match main screen fade timing so titles appear in sync with other components */
+  animation: fadeIn 360ms ease both;
+  animation-delay: 0s;
 }
 
 .resultDivider {
@@ -107,6 +110,7 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1/1;
+  max-width: 100%;
 }
 
 /* New: result image area (wrapper) and image styles with sticker-like effects */
@@ -135,9 +139,25 @@
   animation: stickIn 560ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
+.stickerContainer {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  flex-shrink: 0;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+  max-width: 100%;
+  overflow: hidden; /* prevent sticker spilling out */
+}
+
 .resultImage {
-  width: 80%;
-  height: 80%;
+  width: 100% !important;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   display: block;
   border-radius: 12px; /* inner rounding */
