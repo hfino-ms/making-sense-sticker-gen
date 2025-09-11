@@ -26,17 +26,6 @@ export async function uploadComposedToServer(payload: { email:string; name:strin
         const { uploadDataUrlToSupabase } = await import('./supabaseClient');
         const publicUrl = await uploadDataUrlToSupabase(supabaseUrl, supabaseAnon, supabaseBucket, payload.composedDataUrl);
 
-        // Optionally fire n8n webhook from client if configured
-        const n8nWebhook = (import.meta.env.VITE_N8N_WEBHOOK_URL as string) || '';
-        const n8nAuth = (import.meta.env.VITE_N8N_WEBHOOK_AUTH as string) || '';
-        if (n8nWebhook) {
-          try {
-            const headers: Record<string,string> = { 'Content-Type': 'application/json' };
-            if (n8nAuth) headers['Authorization'] = n8nAuth;
-            await fetch(n8nWebhook, { method: 'POST', headers, body: JSON.stringify({ email: payload.email, name: payload.name, timestamp: payload.timestamp, sticker: publicUrl, photo: payload.photo || '', agent: payload.agent?.name || payload.agent?.key || null, survey: payload.survey }) });
-          } catch (e) { console.warn('client n8n webhook failed', e); }
-        }
-
         return { ok: true, imageUrl: publicUrl, clientFallback: true };
       } catch (clientErr) {
         throw new Error(`Server upload failed: ${String(errMsg)}; Client fallback failed: ${String((clientErr as any)?.message || clientErr)}`);

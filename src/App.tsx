@@ -138,98 +138,92 @@ function App() {
   const submittedStickersRef = useRef<Set<string>>(new Set());
 
   const submitUserData = async () => {
+    const surveyObj: Record<string, string> = {};
     try {
-      const surveyObj: Record<string, string> = {};
-      try {
-        QUESTIONS.forEach((q, idx) => {
-          const slot = idx + 1;
-          surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
-          const ans = (answers || {})[q.id];
-          if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
-          if (typeof ans === 'object') {
-            const choiceId = ans.choice;
-            const opt = q.options?.find((o: any) => o.id === choiceId);
-            surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
-          } else {
-            surveyObj[`answer_${slot}`] = String(ans);
-          }
-        });
-      } catch (e) { console.warn('Failed to build survey payload on client', e); }
+      QUESTIONS.forEach((q, idx) => {
+        const slot = idx + 1;
+        surveyObj[`question_${slot}`] = q.title.split('\n')[0] || q.title;
+        const ans = (answers || {})[q.id];
+        if (!ans) { surveyObj[`answer_${slot}`] = ''; return; }
+        if (typeof ans === 'object') {
+          const choiceId = ans.choice;
+          const opt = q.options?.find((o: any) => o.id === choiceId);
+          surveyObj[`answer_${slot}`] = (opt && opt.label) ? opt.label : String(choiceId);
+        } else {
+          surveyObj[`answer_${slot}`] = String(ans);
+        }
+      });
+    } catch (e) { console.warn('Failed to build survey payload on client', e); }
 
-      const stickerDataUrl = (result as any)?.imageDataUrl || (result as any)?.imageUrl || null;
-      if (!stickerDataUrl) {
-        setError('No sticker image available to submit');
-        setStep(STEPS.Result);
-        return;
+    const stickerDataUrl = (result as any)?.imageDataUrl || (result as any)?.imageUrl || null;
+    if (!stickerDataUrl) {
+      setError('No sticker image available to submit');
+      setStep(STEPS.Result);
+      return;
+    }
+
+    // Prevent duplicate submissions for the same sticker data URL
+    if (submittedStickersRef.current.has(stickerDataUrl)) {
+      console.log('Skipping duplicate submission for', stickerDataUrl);
+      setSuccessMessage("Success — we've already submitted this sticker.");
+      setTimeout(() => setSuccessMessage(null), 5000);
+      return;
+    }
+
+    // Mark as submitted immediately to prevent race conditions from multiple clicks.
+    submittedStickersRef.current.add(stickerDataUrl);
+
+    try {
+      const resp = await submitComposed({
+        email: userEmail || '',
+        name: userName || '',
+        timestamp: new Date().toISOString(),
+        agent: agentResult || (result as any)?.agent || null,
+        survey: surveyObj,
+        photo: capturedPhoto || '',
+        composedDataUrl: stickerDataUrl
+      });
+
+      if (!resp || !resp.ok) {
+        throw new Error(`Submission failed: ${JSON.stringify(resp)}`);
       }
 
-      try {
-        // Prevent duplicate submissions for the same sticker data URL
-        if (stickerDataUrl && submittedStickersRef.current.has(stickerDataUrl)) {
-          console.log('Skipping duplicate submission for', stickerDataUrl);
-          setSuccessMessage("Success — we've already submitted this sticker.");
-          setTimeout(() => setSuccessMessage(null), 5000);
-          return;
-        }
+      const imageUrl = resp.imageUrl || resp?.image || resp?.url || null;
+      if (!imageUrl) {
+        throw new Error('Upload succeeded but no imageUrl returned');
+      }
 
-        const resp = await submitComposed({
+      // At this point, upload is successful. Now, notify n8n.
+      try {
+        const { sendToN8nFromClient } = await import('./services/submitClient');
+        const webhookPayload = {
           email: userEmail || '',
           name: userName || '',
           timestamp: new Date().toISOString(),
-          agent: agentResult || (result as any)?.agent || null,
-          survey: surveyObj,
+          sticker: imageUrl,
           photo: capturedPhoto || '',
-          composedDataUrl: stickerDataUrl
-        });
+          archetype: (agentResult as any)?.name || (agentResult as any)?.key || null,
+          survey: surveyObj
+        };
+        const hookResp = await sendToN8nFromClient(webhookPayload);
+        console.log('n8n webhook response', hookResp);
 
-        if (!resp || !resp.ok) {
-          setError(`Submission failed: ${JSON.stringify(resp)}`);
-          setStep(STEPS.Result);
-          return;
-        }
-
-        // resp should contain imageUrl. Compose payload and send to n8n via backend helper
-        const imageUrl = resp.imageUrl || resp?.image || resp?.url || null;
-        if (!imageUrl) {
-          setError('Upload succeeded but no imageUrl returned');
-          setStep(STEPS.Result);
-          return;
-        }
-
-        try {
-          // Mark as submitted to avoid duplicates while webhook is fired
-          submittedStickersRef.current.add(stickerDataUrl);
-
-          const { sendToN8nFromClient } = await import('./services/submitClient');
-          const webhookPayload = {
-            email: userEmail || '',
-            name: userName || '',
-            timestamp: new Date().toISOString(),
-            sticker: imageUrl,
-            photo: capturedPhoto || '',
-            archetype: (agentResult as any)?.name || (agentResult as any)?.key || null,
-            survey: surveyObj
-          };
-          const hookResp = await sendToN8nFromClient(webhookPayload);
-          console.log('n8n webhook response', hookResp);
-
-          // Show success banner to the user
-          setSuccessMessage("Success — we've sent your agent to your email. Please check your inbox.");
-          setTimeout(() => setSuccessMessage(null), 8000);
-        } catch (hookErr) {
-          console.warn('Failed to send n8n webhook from client', hookErr);
-          setError('Failed to notify via webhook');
-        }
-
-        console.log('Submission successful', resp);
-      } catch (e) {
-        console.error('Error submitting user data:', e);
-        setError(String((e as any)?.message || e));
-        setStep(STEPS.Result);
-        return;
+        setSuccessMessage("Success — we've sent your agent to your email. Please check your inbox.");
+        setTimeout(() => setSuccessMessage(null), 8000);
+      } catch (hookErr) {
+        console.warn('Failed to send n8n webhook from client', hookErr);
+        setError('Failed to notify via webhook, but your sticker was saved.');
       }
-    } catch (error) {
-      console.error('Error submitting user data to server:', error);
+
+      console.log('Submission successful', resp);
+
+    } catch (e) {
+      // If any part of the main submission fails, allow user to try again.
+      submittedStickersRef.current.delete(stickerDataUrl);
+
+      console.error('Error submitting user data:', e);
+      setError(String((e as any)?.message || e));
+      setStep(STEPS.Result);
     }
   };
 
