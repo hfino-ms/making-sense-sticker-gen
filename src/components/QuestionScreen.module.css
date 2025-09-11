@@ -82,7 +82,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr)); /* Desktop: 2x2 grid */
   gap: 32px;
-  align-self: stretch;
   position: relative;
   z-index: 1;
   justify-items: center;
@@ -96,17 +95,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 32px;
     max-width: 520px;
-  }
-}
-
-/* Mobile: single column stack */
-@media (max-width: 743px) {
-  .questionOptions {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center;
-    max-width: 300px;
   }
 }
 
@@ -185,7 +173,7 @@
 
 @media (max-width: 768px) {
   .questionNavigation {
-    flex-direction: column;
+    flex-direction: row;
     gap: 12px;
   }
 }
@@ -321,20 +309,20 @@
   }
 
   .questionOption {
-    width: 200px;
-    height: 110px;
+    width: 160px;
+    height: 100px;
     padding: 12px 30px 20px 30px;
   }
 
   .optionIcon {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     margin-bottom: 6px;
   }
 
   .optionIcon img {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
   }
 
   .optionLabel {
@@ -391,5 +379,17 @@
   .optionLabel {
     font-size: 16px;
     font-weight: 700;
+  }
+}
+
+/* iPad Pro Max (12.9") specific optimization: wider padding and 32px gap */
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .questionCardsContainer {
+    padding-left: 80px;
+    padding-right: 80px;
+    box-sizing: border-box;
+  }
+  .questionOptions {
+    gap: 32px;
   }
 }

@@ -123,7 +123,7 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
           <div className={styles.photoButtons}>
             {!snapshot && !cameraStarted && (
               <>
-                <Button variant="text" onClick={onSkip}>SKIP</Button>
+                <Button variant="secondary" onClick={onSkip}>SKIP</Button>
                 <Button variant="primary" onClick={startCamera}>OPEN CAMERA</Button>
 
               </>

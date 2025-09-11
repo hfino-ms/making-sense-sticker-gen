@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import styles from './EmailCapture.module.css';
-import Button from './ui/Button';
-import Divider from './ui/Divider';
+import { useState } from "react";
+import type { FormEvent } from "react";
+import styles from "./EmailCapture.module.css";
+import Button from "./ui/Button";
+import Divider from "./ui/Divider";
 
-type Props = { onSubmit: (email: string) => void; };
+type Props = { onSubmit: (email: string) => void };
 
 const EmailCapture = ({ onSubmit }: Props) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -19,16 +19,14 @@ const EmailCapture = ({ onSubmit }: Props) => {
   return (
     <div className={styles.emailScreen}>
       <div className={styles.emailSection}>
-        <div className={styles.emailHeaderSection}>
-          <h1 className={styles.emailTitle}>Get Your AI Agent</h1>
-          
-          <Divider />
-          
-          <p className={styles.emailDescription}>
-            Enter your email address below,<br />
-            and we'll send your new AI Agent directly to your inbox.
-          </p>
-        </div>
+        <h1 className={styles.emailTitle}>Get Your AI Agent</h1>
+
+        <Divider />
+
+        <p className={styles.emailDescription}>
+          Enter your email address below, and we'll send your new AI Agent
+          directly to your inbox.
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.emailForm}>
           <div className={styles.emailInputWrapper}>
@@ -42,11 +40,14 @@ const EmailCapture = ({ onSubmit }: Props) => {
             />
           </div>
 
-          <div className={styles.formActions}>
-            <Button type="submit" variant="primary">SUBMIT</Button>
-          </div>
+          <Button
+            className={styles.emailSubmitButton}
+            type="submit"
+            variant="primary"
+          >
+            SUBMIT
+          </Button>
         </form>
-
       </div>
     </div>
   );

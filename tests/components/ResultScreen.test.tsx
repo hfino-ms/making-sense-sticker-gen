@@ -1,23 +1,26 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
-import { JSDOM } from 'jsdom';
-import ResultScreen from '../../src/components/ResultScreen';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, cleanup } from "@testing-library/react";
+import { JSDOM } from "jsdom";
+import ResultScreen from "../../src/components/ResultScreen";
 
 // Minimal mock result with data URL
 const mockResult = {
-  imageDataUrl: 'data:image/png;base64,AAAA',
-  agent: { name: 'The Integrator', key: 'integrator' }
+  imageDataUrl: "data:image/png;base64,AAAA",
+  agent: { name: "The Integrator", key: "integrator" },
 } as any;
 
-describe('ResultScreen auto-submit guard', () => {
+describe("ResultScreen auto-submit guard", () => {
   let dom: JSDOM | null = null;
 
   beforeEach(() => {
     // create a fresh JSDOM environment for each test so testing-library has document/window
-    dom = new JSDOM('<!doctype html><html><body></body></html>');
+    dom = new JSDOM("<!doctype html><html><body></body></html>");
     (globalThis as any).window = dom.window as any;
     (globalThis as any).document = dom.window.document as any;
-    (globalThis as any).navigator = dom.window.navigator as any;
+    Object.defineProperty(globalThis, "navigator", {
+      value: dom.window.navigator,
+      configurable: true,
+    });
 
     // clear global guard
     (globalThis as any).__submittedStickerUrls = undefined;
@@ -28,7 +31,9 @@ describe('ResultScreen auto-submit guard', () => {
     vi.resetAllMocks();
     (globalThis as any).__submittedStickerUrls = undefined;
     if (dom) {
-      try { dom.window.close(); } catch (e) {}
+      try {
+        dom.window.close();
+      } catch (e) {}
       dom = null;
     }
     try {
@@ -38,16 +43,32 @@ describe('ResultScreen auto-submit guard', () => {
     } catch (e) {}
   });
 
-  it('calls onShare only once even if mounted twice with same sticker', async () => {
+  it("calls onShare only once even if mounted twice with same sticker", async () => {
     const onShare = vi.fn();
-    const { unmount } = render(<ResultScreen result={mockResult} onShare={onShare} onPrint={() => {}} /> as any);
+    const { unmount } = render(
+      (
+        <ResultScreen
+          result={mockResult}
+          onShare={onShare}
+          onPrint={() => {}}
+        />
+      ) as any
+    );
 
     // first mount should call onShare once
     expect(onShare).toHaveBeenCalledTimes(1);
 
     // unmount and remount with same result
     unmount();
-    render(<ResultScreen result={mockResult} onShare={onShare} onPrint={() => {}} /> as any);
+    render(
+      (
+        <ResultScreen
+          result={mockResult}
+          onShare={onShare}
+          onPrint={() => {}}
+        />
+      ) as any
+    );
 
     // still only called once
     expect(onShare).toHaveBeenCalledTimes(1);

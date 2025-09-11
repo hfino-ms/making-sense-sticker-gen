@@ -277,3 +277,12 @@
     max-width: 740px;
   }
 }
+
+@media (max-width: 480px) {
+  .loadingSection {
+    justify-content: flex-start;
+  }
+  .loadingDescriptionSection {
+    padding: 40px 16px;
+  }
+}

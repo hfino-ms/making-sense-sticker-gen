@@ -140,6 +140,7 @@
 @media (max-width: 480px) {
   .photoScreen {
     padding: 20px 16px;
+    justify-content: flex-start;
   }
 
   .photoTitle {
@@ -158,9 +159,10 @@
 
   .photoButtons {
     gap: 16px;
-    flex-direction: column;
+    flex-direction: row;
     width: 100%;
     align-items: center;
+    flex-wrap: nowrap;
   }
 
   .cameraFrame,

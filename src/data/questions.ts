@@ -3,7 +3,7 @@ import type { Question } from '../types';
 export const QUESTIONS: Question[] = [
   {
     id: 'decision_making',
-    title: 'Q1 – Decision-Making Approach\nWhen evaluating a potential investment, how do you typically approach decision-making?',
+    title: 'When evaluating a potential investment, how do you typically approach decision-making?',
     layout: 'icons',
     options: [
       { id: 'data_driven', label: 'Data-driven', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/a401344c9969a5d400f54f55c2592626ea2c0298?width=150' },
@@ -14,7 +14,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 'tech_adoption',
-    title: 'Q2 – Adapting to New Tech\nWhen a new technology emerges in the market, how do you respond?',
+    title: 'When a new technology emerges in the market, how do you respond?',
     layout: 'radio-list',
     options: [
       { id: 'disruptor', label: 'Disruptor' },
@@ -25,7 +25,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 'risk_appetite',
-    title: 'Q3 – Risk Appetite\nWhen considering a new opportunity, what best describes your risk tolerance?',
+    title: 'When considering a new opportunity, what best describes your risk tolerance?',
     layout: 'dial',
     options: [
       { id: 'low', label: 'Low', value: 0 },
@@ -36,7 +36,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 'team_dynamics',
-    title: "Q4 – Team Dynamics\nWhen working with portfolio company teams, what's your default style?",
+    title: "When working with portfolio company teams, what's your default style?",
     layout: 'icons',
     options: [
       { id: 'hands_on', label: 'Hands-on', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/07bc8535d78138efef9d77a8db3b62907525c1e7?width=150' },
@@ -47,7 +47,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: 'growth_priorities',
-    title: 'Q5 – Growth Priorities\nWhen defining a growth plan for a portfolio company, which area do you prioritize first?',
+    title: 'When defining a growth plan for a portfolio company, which area do you prioritize first?',
     layout: 'radio-list',
     options: [
       { id: 'operational_efficiency', label: 'Operational efficiency' },
