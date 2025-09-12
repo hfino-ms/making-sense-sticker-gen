@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import styles from './NameInput.module.css';
 import Button from './ui/Button';
 import MotionSection from './MotionSection';
@@ -7,6 +7,12 @@ type Props = { onContinue: (name: string) => void };
 
 const NameInput = ({ onContinue }: Props) => {
   const [name, setName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

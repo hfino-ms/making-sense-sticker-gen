@@ -114,6 +114,10 @@
   color: #9e9e9e; /* match Figma placeholder color */
 }
 
+.emailInput:focus {
+  outline: none;
+  box-shadow: none;
+}
 .emailSubmitButton {
   width: fit-content;
   font-size: 16px;
