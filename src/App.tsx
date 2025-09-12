@@ -8,7 +8,6 @@ import PhotoCapture from './components/PhotoCapture';
 import LoadingScreen from './components/LoadingScreen';
 import ResultScreen from './components/ResultScreen';
 import ErrorBanner from './components/ErrorBanner';
-import SuccessBanner from './components/SuccessBanner';
 import { QUESTIONS } from './data/questions';
 import type { Answers, GenerationResult } from './types';
 import MotionSection from './components/MotionSection';
@@ -34,7 +33,6 @@ function App() {
   const [answers, setAnswers] = useState<Answers>({});
   const [questionIndex, setQuestionIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | undefined>(undefined);
 
@@ -165,8 +163,6 @@ function App() {
     // Prevent duplicate submissions for the same sticker data URL
     if (submittedStickersRef.current.has(stickerDataUrl)) {
       console.log('Skipping duplicate submission for', stickerDataUrl);
-      setSuccessMessage("Success — we've already submitted this sticker.");
-      setTimeout(() => setSuccessMessage(null), 5000);
       return;
     }
 
@@ -207,8 +203,6 @@ function App() {
         const hookResp = await sendToN8nFromClient(webhookPayload);
         console.log('n8n webhook response', hookResp);
 
-        setSuccessMessage("Success — we've sent your agent to your email. Please check your inbox.");
-        setTimeout(() => setSuccessMessage(null), 8000);
       } catch (hookErr) {
         console.warn('Failed to send n8n webhook from client', hookErr);
         setError('Failed to notify via webhook, but your sticker was saved.');
@@ -319,7 +313,6 @@ function App() {
       onClose={handleCloseQuestions}
     >
       {error && <ErrorBanner>{error}</ErrorBanner>}
-      {successMessage && <SuccessBanner>{successMessage}</SuccessBanner>}
 
       <MotionSection animateKey={step} duration={360}>
         {step === STEPS.Splash && <SplashScreen onStart={() => setStep(STEPS.NameInput)} />}
