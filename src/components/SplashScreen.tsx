@@ -39,7 +39,7 @@ const SplashScreen = ({ onStart }: Props) => {
           </div>
 
           <p className={styles.heroDescription}>
-            Uncover the digital ally that thinks like you, moves with you, and amplifies your every decision.
+            Uncover the digital ally that thinks like you, moves with you,<br />and amplifies your every decision.
             <br />
             <br />
             In the fast pace of Private Equity, every choice shapes the future. Let your AI Agent be the silent partner that turns instinct into insight, and vision into value.
