@@ -41,8 +41,8 @@
   align-self: stretch;
   color: #111210;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 48px;
   font-style: normal;
   font-weight: 700;
@@ -84,15 +84,15 @@
   gap: 16px;
   align-self: stretch;
   border-radius: 6px;
-  border: 1px solid #ADABB3;
-  background: #FFF;
+  border: 1px solid #adabb3;
+  background: #fff;
 }
 
 .nameInput {
   flex: 1 0 0;
-  color: #9E9E9E;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  color: #9e9e9e;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
@@ -110,7 +110,7 @@
 }
 
 .nameInput::placeholder {
-  color: #9E9E9E;
+  color: #9e9e9e;
 }
 
 .nameButtonWrapper {
@@ -121,28 +121,28 @@
 /* Responsive adjustments for smaller screens while maintaining iPad Pro optimization */
 @media (max-width: 768px) {
   .nameSection {
-    padding: 120px 24px 40px 24px;
+    padding: 20px 24px 40px 24px;
     gap: 100px;
   }
-  
+
   .nameTitle {
     font-size: 36px;
     line-height: 40px;
   }
-  
+
   .nameInputWrapper {
     width: 100%;
     max-width: 400px;
   }
-  
+
   .nameContent {
     gap: 40px;
   }
-  
+
   .nameHeaderSection {
     gap: 30px;
   }
-  
+
   .nameForm {
     gap: 40px;
   }
@@ -153,24 +153,24 @@
     padding: 80px 16px 32px 16px;
     gap: 60px;
   }
-  
+
   .nameTitle {
     font-size: 28px;
     line-height: 32px;
   }
-  
+
   .nameInputWrapper {
     width: 100%;
   }
-  
+
   .nameContent {
     gap: 30px;
   }
-  
+
   .nameHeaderSection {
     gap: 24px;
   }
-  
+
   .nameForm {
     gap: 30px;
   }
@@ -181,12 +181,12 @@
   .nameContent {
     max-width: 690px;
   }
-  
+
   .nameTitle {
     font-size: 48px;
     line-height: 52px;
   }
-  
+
   .nameInputWrapper {
     width: 498px;
   }

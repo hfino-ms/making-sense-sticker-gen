@@ -16,7 +16,7 @@
   align-items: center;
   flex: 1;
   width: 100%;
-  padding: 120px 24px 40px; /* reduced top padding to remove large gap above title */
+  padding: 40px 0; /* reduced top padding to remove large gap above title */
   gap: 60px; /* smaller vertical spacing between sections */
   box-sizing: border-box;
 }
@@ -153,7 +153,7 @@
 }
 
 .resultImage {
-  width: 100% !important;
+  width: 70% !important;
   height: 100%;
   max-width: 100%;
   max-height: 100%;

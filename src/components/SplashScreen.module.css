@@ -35,8 +35,8 @@
   align-self: stretch;
   color: #111210;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 56px;
   font-style: normal;
   font-weight: 700;
@@ -60,7 +60,7 @@
   height: 4px;
   flex-shrink: 0;
   border-radius: 3px;
-  background: linear-gradient(90deg, #0ECC7E 0%, #53C0D2 100%);
+  background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
 }
 
 .dividerDot {
@@ -68,7 +68,7 @@
   height: 4px;
   flex-shrink: 0;
   border-radius: 4px;
-  background: linear-gradient(137deg, #1EDD8E 21.41%, #53C0D2 58.8%);
+  background: linear-gradient(137deg, #1edd8e 21.41%, #53c0d2 58.8%);
   margin-left: 3px;
 }
 
@@ -76,8 +76,8 @@
   align-self: stretch;
   color: #111210;
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
-  font-family: 'Red Hat Display', system-ui, sans-serif;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", system-ui, sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
@@ -96,15 +96,15 @@
 /* Responsive adjustments for smaller screens while maintaining iPad Pro optimization */
 @media (max-width: 768px) {
   .sectionOne {
-    padding: 120px 24px 40px 24px;
+    padding: 20px 24px 40px 24px;
     gap: 100px;
   }
-  
+
   .heroTitle {
     font-size: 42px;
     line-height: 48px;
   }
-  
+
   .heroDescription {
     font-size: 16px;
     line-height: 20px;
@@ -116,17 +116,17 @@
     padding: 80px 16px 32px 16px;
     gap: 60px;
   }
-  
+
   .heroSection {
     padding-bottom: 40px;
     gap: 24px;
   }
-  
+
   .heroTitle {
     font-size: 32px;
     line-height: 36px;
   }
-  
+
   .heroDescription {
     font-size: 14px;
     line-height: 18px;
@@ -138,12 +138,12 @@
   .heroSection {
     max-width: 690px;
   }
-  
+
   .heroTitle {
     font-size: 56px;
     line-height: 64px;
   }
-  
+
   .heroDescription {
     font-size: 18px;
     line-height: 22px;

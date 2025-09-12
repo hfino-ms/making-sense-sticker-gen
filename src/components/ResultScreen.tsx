@@ -5,6 +5,7 @@ import { composeStickerWithHtmlLabel } from "../utils/htmlToCanvas";
 import { useEffect, useState } from "react";
 import type { FC } from "react";
 import type { GenerationResult } from "../types";
+import Button from "./ui/Button";
 
 type Props = {
   result: GenerationResult;
@@ -316,9 +317,9 @@ const ResultScreen: FC<Props> = ({
                 PRINT
               </button>
               <div className={styles.startOverSection}>
-                <button className={styles.startOverButton} onClick={onRestart}>
+                <Button variant="link" className={styles.startOverButton} onClick={onRestart}>
                   START OVER
-                </button>
+                </Button>
               </div>
             </div>
           </div>

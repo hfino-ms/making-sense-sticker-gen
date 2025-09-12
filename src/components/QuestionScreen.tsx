@@ -63,7 +63,7 @@ const QuestionScreen: FC<Props> = ({
       case 'radio-list':
         return (
           // stable key per question to avoid reanimating on every selection change
-          <MotionSection animateKey={`radlist-${question.id}`} duration={260}>
+          <MotionSection animateKey={`radlist-${question.id}`} duration={360}>
             <RadioListQuestion
               options={question.options}
               selectedId={selected?.choice}
@@ -76,7 +76,7 @@ const QuestionScreen: FC<Props> = ({
       default:
         return (
           // stable key per question layout
-          <MotionSection animateKey={`icons-${question.id}`} duration={260}>
+          <MotionSection animateKey={`icons-${question.id}`} duration={360}>
             <div className={styles.questionCardsContainer}>
               <div className={styles.questionOptions}>
                 {question.options.map((option) => (
@@ -108,7 +108,7 @@ const QuestionScreen: FC<Props> = ({
       <div className={styles.questionMain}>
         <div className={styles.questionSection}>
           <div className={styles.questionHeaderSection}>
-            <MotionSection animateKey={`title-${question.id}`} duration={900} className="question-title-motion">
+            <MotionSection animateKey={`title-${question.id}`} duration={360} className="question-title-motion">
               <h1 className={styles.questionTitle}>{question.title}</h1>
             </MotionSection>
           </div>

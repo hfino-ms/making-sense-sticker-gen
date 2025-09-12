@@ -220,7 +220,7 @@ const LoadingScreen = () => {
   );
 
   return (
-    <MotionSection animateKey={`loading-step-${currentStep}`} duration={500} className={styles.loadingScreen}>
+    <MotionSection animateKey={`loading-step-${currentStep}`} duration={360} className={styles.loadingScreen}>
       <div className={styles.loadingSection}>
         {/* Static header: main title, divider and loader spinner */}
         <div className={styles.staticHeader}>
