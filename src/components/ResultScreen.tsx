@@ -2,7 +2,7 @@ import styles from "./ResultScreen.module.css";
 import MotionSection from "./MotionSection";
 import { composeStickerFromSource } from "../utils/composeSticker";
 import { composeStickerWithHtmlLabel } from "../utils/htmlToCanvas";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FC } from "react";
 import type { GenerationResult } from "../types";
 import Button from "./ui/Button";
@@ -34,6 +34,10 @@ const ResultScreen: FC<Props> = ({
   );
   const [stickerVisible, setStickerVisible] = useState(false);
   const [servicesTriggered, setServicesTriggered] = useState(false);
+
+  const [countdown, setCountdown] = useState<number>(30);
+  const [isCountdownActive, setIsCountdownActive] = useState(false);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
   const composeSticker = async (source?: string): Promise<string> => {
     const src = source || stickerSource;
@@ -138,6 +142,9 @@ const ResultScreen: FC<Props> = ({
   }, [displayedSrc, onShare]);
 
   const printSticker = async () => {
+    if (isCountdownActive) {
+      setCountdown(30);
+    }
     let outSrc = stickerSource;
     try {
       outSrc = await composeSticker();
@@ -156,29 +163,61 @@ const ResultScreen: FC<Props> = ({
     document.body.appendChild(printFrame);
 
     const doc = printFrame.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(`<html><head><title>${
-        resultAgent?.name || "Agent"
-      } Sticker</title><style>
-        html,body{height:100%;margin:0}
-        .print-body{height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
-        .print-image{max-width:90vw;max-height:90vh;object-fit:contain;}
-      </style></head><body class="print-body">
-        <img src="${outSrc}" class="print-image"/>
-      </body></html>`);
-      doc.close();
-      printFrame.contentWindow?.focus();
-      printFrame.contentWindow?.print();
+    if (!printFrame.contentWindow || !doc) {
+      if (document.body.contains(printFrame)) {
+        document.body.removeChild(printFrame);
+      }
+      onPrint();
+      setIsCountdownActive(true);
+      setCountdown(30);
+      return;
     }
+
+    doc.open();
+    doc.write(`<html><head><title>${
+      resultAgent?.name || "Agent"
+    } Sticker</title><style>
+      html,body{height:100%;margin:0}
+      .print-body{height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
+      .print-image{max-width:90vw;max-height:90vh;object-fit:contain;}
+    </style></head><body class="print-body">
+      <img src="${outSrc}" class="print-image"/>
+    </body></html>`);
+    doc.close();
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
 
     setTimeout(() => {
       if (document.body.contains(printFrame)) {
         document.body.removeChild(printFrame);
       }
       onPrint();
+      setIsCountdownActive(true);
+      setCountdown(30);
     }, 1000);
   };
+
+  useEffect(() => {
+    if (!isCountdownActive) {
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+      return;
+    }
+    setCountdown(30);
+    countdownInterval.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownInterval.current)
+            clearInterval(countdownInterval.current);
+          if (onRestart) onRestart();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+    };
+  }, [isCountdownActive, onRestart]);
 
   const getPersonalityData = () => {
     if (!resultAgent) return null;
@@ -299,6 +338,17 @@ const ResultScreen: FC<Props> = ({
             )}
             <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
               <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} />
+            </div>
+            <div
+              style={{
+                visibility: isCountdownActive ? "visible" : "hidden",
+                margin: "16px 0",
+                color: "#0ecc7e",
+                fontWeight: 600,
+                fontSize: 20,
+              }}
+            >
+              <p>Redirecting to start in {countdown} seconds...</p>
             </div>
             <div className={styles.ctaSection}>
               <button className={styles.printButton} onClick={printSticker}>
