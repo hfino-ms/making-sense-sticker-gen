@@ -358,7 +358,7 @@
 
   .questionOptions {
     gap: 32px;
-    max-width: 520px;
+    max-width: 1000px;
   }
 
   .questionOption {
