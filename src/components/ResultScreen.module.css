@@ -5,7 +5,7 @@
   width: 100%;
   background: transparent;
   position: relative;
-  overflow: auto; /* allow scroll if absolutely needed */
+  overflow: hidden; /* changed from auto to hidden to prevent scroll */
   padding-top: 20px; /* add some top spacing to push content up but not too much */
   box-sizing: border-box;
 }
@@ -13,11 +13,10 @@
 .resultSection {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* changed from center to push content up */
+  justify-content: flex-start;
   align-items: center;
   flex: 1;
   width: 100%;
-  padding: 75px 24px 10px; /* increased top padding to 75px for more space from header */
   gap: 15px; /* balanced gap between main sections */
   box-sizing: border-box;
   overflow: visible; /* allow content to be visible */
@@ -53,7 +52,7 @@
   font-size: 18px; /* restored original size */
   font-style: normal;
   line-height: 22px; /* restored original line-height */
-  margin-bottom: 25px; /* more space after description text */
+  margin-bottom: 15px; /* reduced from 25px to 15px for more space for buttons */
 }
 
 .resultImageArea {
@@ -67,7 +66,7 @@
   background: transparent;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
-  margin-bottom: 5px; /* reduced from 10px - less space after image, before buttons */
+  margin-bottom: 0px; /* removed margin to save space */
 }
 
 .resultTitle {
@@ -119,8 +118,8 @@
 /* Sticker Container */
 .stickerContainer {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 160px; /* reduced from 180px to 160px */
+  height: 160px; /* reduced from 180px to 160px */
   flex-shrink: 0;
   margin: 0 auto;
   display: flex;
@@ -144,8 +143,8 @@
 
 .stickerContainer {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 160px; /* reduced from 180px to 160px */
+  height: 160px; /* reduced from 180px to 160px */
   flex-shrink: 0;
   margin: 0 auto;
   display: flex;
@@ -157,7 +156,7 @@
 }
 
 .resultImage {
-  width: 70% !important;
+  width: 50% !important;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
@@ -252,7 +251,7 @@
 .startOverButton {
   display: inline-flex;
   height: auto;
-  padding: 12px 8px; /* kept increased padding for better visibility */
+  padding: 12px 8px;
   justify-content: center;
   align-items: center;
   gap: 8px;
@@ -309,8 +308,8 @@
   }
 
   .stickerContainer {
-    width: 240px;
-    height: 240px;
+    width: 170px; /* reduced from 200px to 170px */
+    height: 170px; /* reduced from 200px to 170px */
   }
 
   .printButton {
@@ -339,8 +338,8 @@
   }
 
   .stickerContainer {
-    width: 200px;
-    height: 200px;
+    width: 140px; /* reduced from 160px to 140px */
+    height: 140px; /* reduced from 160px to 140px */
   }
 
   .printButton {

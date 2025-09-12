@@ -934,7 +934,7 @@ html[data-theme="dark"] .secondary-button {
   text-align: center;
   max-width: 696px;
   width: 100%;
-  gap: 40px; /* increased spacing to separate title and options */
+  gap: 40px;
 }
 
 .question-title {
@@ -952,14 +952,13 @@ html[data-theme="dark"] .secondary-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 22px; /* slightly increased gap between options */
+  gap: 22px;
   flex-wrap: wrap;
   width: 100%;
 }
 
-/* Ensure the navigation buttons are spaced further from options */
 .question-navigation {
-  margin-top: 28px; /* increased spacing between options and navigation buttons */
+  margin-top: 28px;
 }
 
 .question-option {
@@ -1013,8 +1012,8 @@ html[data-theme="dark"] .secondary-button {
 .question-navigation {
   display: flex;
   align-items: center;
-  gap: 20px; /* increased navigation spacing */
-  margin-top: 36px; /* ensure buttons are further away from options */
+  gap: 20px;
+  margin-top: 36px;
 }
 
 .nav-button {
