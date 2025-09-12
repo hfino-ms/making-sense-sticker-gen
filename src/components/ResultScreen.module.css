@@ -9,7 +9,6 @@
   position: relative;
 }
 
-/* Main Section */
 .resultSection {
   display: flex;
   flex-direction: column;
