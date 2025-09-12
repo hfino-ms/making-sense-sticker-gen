@@ -7,9 +7,9 @@ export const QUESTIONS: Question[] = [
     layout: 'icons',
     options: [
       { id: 'data_driven', label: 'Data-driven', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/a401344c9969a5d400f54f55c2592626ea2c0298?width=150' },
-      { id: 'hybrid', label: 'Hybrid', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/0ac811bd05f6ddc8bf847ddb3489b5c2754116e8?width=150' },
-      { id: 'balanced_mix', label: 'Balanced mix', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/99cb3257a361ef479d90e8b0e558ef7cf2d532af?width=150' },
-      { id: 'intuition', label: 'Intuition', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/e289af3638361847320c030d3370ce41e910bb8d?width=150' },
+      { id: 'hybrid', label: 'Hybrid', icon: 'https://i.imgur.com/07Np3Ec.png' },
+      { id: 'balanced_mix', label: 'Balanced mix', icon: 'https://i.imgur.com/7xJKshN.png' },
+      { id: 'intuition', label: 'Intuition', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/0ac811bd05f6ddc8bf847ddb3489b5c2754116e8?width=150' },
     ],
   },
   {
@@ -39,9 +39,9 @@ export const QUESTIONS: Question[] = [
     title: "When working with portfolio company teams, what's your default style?",
     layout: 'icons',
     options: [
-      { id: 'hands_on', label: 'Hands-on', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/07bc8535d78138efef9d77a8db3b62907525c1e7?width=150' },
+      { id: 'hands_on', label: 'Hands-on', icon: 'https://i.imgur.com/vxyaPF0.png' },
       { id: 'collaborative', label: 'Collaborative', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/8fb194a4000ebffa552aa2939002a52b3c5b7a93?width=150' },
-      { id: 'advisory', label: 'Advisory', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/d50eed6283dfd5b3aeca7fe04f7541b5a9b40e10?width=150' },
+      { id: 'advisory', label: 'Advisory', icon: 'https://i.imgur.com/xn0Xx3m.png' },
       { id: 'delegative', label: 'Delegative', icon: 'https://api.builder.io/api/v1/image/assets/TEMP/164e51f9e7d3f94218adc5720da7c1485c3c90e4?width=150' },
     ],
   },
