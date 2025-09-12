@@ -1,5 +1,3 @@
-:root {
-}
 .resultContainer {
   display: flex;
   flex-direction: column;
@@ -159,11 +157,10 @@
   max-height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: 12px; /* inner rounding */
-  background: white; /* gives the sticker a white border area */
-  padding: 8px; /* reduce whitespace between edge and artwork */
+  border-radius: 12px;
+  background: white;
+  padding: 12px;
   box-sizing: border-box;
-  /* subtle sticker edge */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: transform 160ms ease, box-shadow 160ms ease, opacity 260ms ease;
@@ -188,49 +185,6 @@
     transform: translateY(0) rotate(0) scale(1);
     opacity: 1;
   }
-}
-
-/* Glossy highlight to simulate laminate */
-.resultImageArea::after {
-  content: "";
-  position: absolute;
-  left: 10%;
-  top: -6%;
-  width: 80%;
-  height: 55%;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.35) 22%,
-    rgba(255, 255, 255, 0.06) 55%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  transform: rotate(-16deg);
-  border-radius: 40%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  filter: blur(1px);
-  opacity: 0.9;
-}
-
-/* Small peeled corner indicator at top-right */
-.resultImageArea::before {
-  content: "";
-  position: absolute;
-  right: 6%;
-  top: 6%;
-  width: 28px;
-  height: 28px;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.95),
-    rgba(255, 255, 255, 0.6) 40%,
-    rgba(0, 0, 0, 0.06) 100%
-  );
-  border-radius: 6px;
-  transform: rotate(14deg);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  pointer-events: none;
 }
 
 .stickerPlaceholder {
