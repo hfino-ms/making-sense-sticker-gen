@@ -4,32 +4,23 @@ import MotionSection from './MotionSection';
 
 const LoadingScreen = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     const STEP_DURATION = 6500;
-    const FADE_DURATION = 300;
-    let step = 1;
-    setCurrentStep(step);
 
-    const progressToNextStep = () => {
-      if (step < 3) {
-        setIsTransitioning(true);
-        setTimeout(() => {
-          step = step + 1;
-          setCurrentStep(step);
-          setTimeout(() => {
-            setIsTransitioning(false);
-            if (step < 3) setTimeout(progressToNextStep, STEP_DURATION);
-          }, FADE_DURATION / 2);
-        }, FADE_DURATION / 2);
-      }
-    };
+    const interval = setInterval(() => {
+      setCurrentStep(prevStep => {
+        if (prevStep >= 3) {
+          clearInterval(interval);
+          return prevStep;
+        }
+        return prevStep + 1;
+      });
+    }, STEP_DURATION);
 
-    const firstTimeout = setTimeout(progressToNextStep, STEP_DURATION);
-    return () => clearTimeout(firstTimeout);
+    return () => clearInterval(interval);
   }, []);
 
   // Carousel drag functionality
@@ -234,34 +225,32 @@ const LoadingScreen = () => {
             <div className={styles.dividerLine}></div>
             <div className={styles.dividerDot}></div>
           </div>
-
-          <div className={styles.loadingSpinnerContainer}>
-            <div className={styles.glowEffect}></div>
-            <div className={styles.sparkles}>
-              <div className={styles.sparkle}></div>
-              <div className={styles.sparkle}></div>
-              <div className={styles.sparkle}></div>
-              <div className={styles.sparkle}></div>
-            </div>
-            <svg className={styles.loadingSpinnerSvg} viewBox="0 0 56 56" width="56" height="56" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M56 28C56 43.464 43.464 56 28 56C12.536 56 0 43.464 0 28C0 12.536 12.536 0 28 0C43.464 0 56 12.536 56 28ZM8.4 28C8.4 38.8248 17.1752 47.6 28 47.6C38.8248 47.6 47.6 38.8248 47.6 28C47.6 17.1752 38.8248 8.4 28 8.4C17.1752 8.4 8.4 17.1752 8.4 28Z" fill="url(#paint0_angular_spinner)"/>
-              <defs>
-                <linearGradient id="paint0_angular_spinner" x1="0" y1="28" x2="56" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#0ECC7E"/>
-                  <stop offset="100%" stopColor="rgba(83, 192, 210, 0)"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
         </div>
 
-        {!isTransitioning && (
-          <div className={styles.loadingContentWrapper}>
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
+        <div className={styles.loadingContentWrapper}>
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </div>
+
+        <div className={styles.loadingSpinnerContainer}>
+          <div className={styles.glowEffect}></div>
+          <div className={styles.sparkles}>
+            <div className={styles.sparkle}></div>
+            <div className={styles.sparkle}></div>
+            <div className={styles.sparkle}></div>
+            <div className={styles.sparkle}></div>
           </div>
-        )}
+          <svg className={styles.loadingSpinnerSvg} viewBox="0 0 56 56" width="56" height="56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M56 28C56 43.464 43.464 56 28 56C12.536 56 0 43.464 0 28C0 12.536 12.536 0 28 0C43.464 0 56 12.536 56 28ZM8.4 28C8.4 38.8248 17.1752 47.6 28 47.6C38.8248 47.6 47.6 38.8248 47.6 28C47.6 17.1752 38.8248 8.4 28 8.4C17.1752 8.4 8.4 17.1752 8.4 28Z" fill="url(#paint0_angular_spinner)"/>
+            <defs>
+              <linearGradient id="paint0_angular_spinner" x1="0" y1="28" x2="56" y2="28" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#0ECC7E"/>
+                <stop offset="100%" stopColor="rgba(83, 192, 210, 0)"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
       </div>
     </MotionSection>
   );
