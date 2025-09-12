@@ -10,7 +10,13 @@ const NameInput = ({ onContinue }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    // Programmatically focus the input to help trigger the on-screen keyboard on mobile devices,
+    // especially on iOS/iPadOS where `autoFocus` can be unreliable.
+    // The timeout gives the screen transition animation time to complete.
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 400); // Corresponds to the MotionSection duration + a small buffer
+    return () => clearTimeout(timer);
   }, []);
 
 
@@ -32,6 +38,7 @@ const NameInput = ({ onContinue }: Props) => {
                 <div className={styles.nameInputField}>
                   <div className={styles.nameInputContainer}>
                     <input
+                      ref={inputRef}
                       type="text"
                       className={styles.nameInput}
                       placeholder="Enter your name"
