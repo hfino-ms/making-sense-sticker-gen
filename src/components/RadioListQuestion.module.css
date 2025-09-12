@@ -41,7 +41,7 @@
     rgba(14, 204, 126, 0.08),
     rgba(83, 192, 210, 0.06)
   );
-  border: 2px solid rgba(0, 0, 0, 0.9); /* explicit black border for selected */
+  border: 2px solid #0ecc7e;
 }
 
 .radioButton {
@@ -117,11 +117,11 @@
 @media (max-width: 480px) {
   .radioListContainer {
     gap: 10px;
+    max-width: 340px;
   }
 
   .radioOption {
     width: 100%;
-    max-width: 280px;
     padding: 12px 24px;
     gap: 16px;
   }
