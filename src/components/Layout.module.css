@@ -4,11 +4,12 @@
   --footer-height: 40px;
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh; /* exact height instead of min-height */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   background: transparent; /* page background set to white */
+  overflow: hidden; /* prevent scrolling */
 }
 
 /* Animated Background removed — static overlay only */
@@ -133,7 +134,10 @@
   box-sizing: border-box;
   position: relative;
   z-index: 2;
-  min-height: calc(100vh - var(--header-height) - var(--footer-height));
+  height: calc(
+    100vh - var(--header-height) - var(--footer-height)
+  ); /* exact height */
+  overflow: hidden; /* prevent scroll */
 }
 
 /* Main content with stepper visible */
@@ -145,7 +149,10 @@
   box-sizing: border-box;
   position: relative;
   z-index: 2;
-  min-height: calc(100vh - var(--header-height) - var(--footer-height) - 64px);
+  height: calc(
+    100vh - var(--header-height) - var(--footer-height) - 64px
+  ); /* exact height */
+  overflow: hidden; /* prevent scroll */
 }
 
 /* Footer */

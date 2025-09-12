@@ -34,6 +34,14 @@ html[data-theme="light"] {
 /* Smooth theme transition */
 html {
   transition: background 900ms ease-in-out, color 600ms ease-in-out;
+  height: 100%; /* ensure html takes full height */
+  overflow: hidden; /* prevent html scroll */
+}
+
+html,
+body {
+  height: 100vh; /* both should be exact viewport height */
+  overflow: hidden; /* prevent any scrolling */
 }
 
 /* Header should match stepper background exactly */
@@ -86,8 +94,9 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh; /* exact height instead of min-height */
   background-color: inherit;
+  overflow: hidden; /* prevent body scroll */
 }
 
 h1 {

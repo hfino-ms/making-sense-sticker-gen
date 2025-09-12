@@ -1,22 +1,26 @@
 .resultContainer {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh; /* exact height instead of min-height */
   width: 100%;
   background: transparent;
   position: relative;
+  overflow: auto; /* allow scroll if absolutely needed */
+  padding-top: 20px; /* add some top spacing to push content up but not too much */
+  box-sizing: border-box;
 }
 
 .resultSection {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* changed from center to push content up */
   align-items: center;
   flex: 1;
   width: 100%;
-  padding: 40px 0; /* reduced top padding to remove large gap above title */
-  gap: 60px; /* smaller vertical spacing between sections */
+  padding: 75px 24px 10px; /* increased top padding to 75px for more space from header */
+  gap: 15px; /* balanced gap between main sections */
   box-sizing: border-box;
+  overflow: visible; /* allow content to be visible */
 }
 
 /* Hero Section */
@@ -25,17 +29,45 @@
   width: 100%;
   max-width: 690px;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* align to top */
   align-items: center;
-  gap: 60px;
+  gap: 20px; /* balanced gap between hero sections */
 }
 
 .heroContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
+  gap: 18px; /* default gap, will be overridden by specific spacing */
   width: 100%;
+}
+
+/* Specific spacing adjustments */
+.personalityDescription {
+  width: 100%;
+  max-width: 660px;
+  color: #111210;
+  text-align: center;
+  font-feature-settings: "liga" off, "clig" off;
+  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 18px; /* restored original size */
+  font-style: normal;
+  line-height: 22px; /* restored original line-height */
+  margin-bottom: 25px; /* more space after description text */
+}
+
+.resultImageArea {
+  position: relative; /* for pseudo elements */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px; /* rounded sticker edge */
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+  overflow: visible;
+  margin-bottom: 5px; /* reduced from 10px - less space after image, before buttons */
 }
 
 .resultTitle {
@@ -44,10 +76,10 @@
   text-align: center;
   font-feature-settings: "liga" off, "clig" off;
   font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 48px;
+  font-size: 48px; /* restored original size */
   font-style: normal;
   font-weight: 700;
-  line-height: 52px; /* 108.333% */
+  line-height: 52px; /* restored original line-height */
   width: 100%;
   /* match main screen fade timing so titles appear in sync with other components */
   animation: fadeIn 360ms ease both;
@@ -76,18 +108,6 @@
   border-radius: 4px;
 }
 
-.personalityDescription {
-  width: 100%;
-  max-width: 660px;
-  color: #111210;
-  text-align: center;
-  font-feature-settings: "liga" off, "clig" off;
-  font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 18px;
-  font-style: normal;
-  line-height: 22px;
-}
-
 .bold {
   font-weight: 700;
 }
@@ -108,20 +128,6 @@
   justify-content: center;
   aspect-ratio: 1/1;
   max-width: 100%;
-}
-
-/* New: result image area (wrapper) and image styles with sticker-like effects */
-.resultImageArea {
-  position: relative; /* for pseudo elements */
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px; /* rounded sticker edge */
-  background: transparent;
-  -webkit-tap-highlight-color: transparent;
-  overflow: visible;
 }
 
 /* visibility states to animate 'sticking' */
@@ -200,7 +206,7 @@
   display: flex;
   flex-direction: column; /* stack vertically: print then start over */
   align-items: center;
-  gap: 16px;
+  gap: 12px; /* balanced gap between print and start over buttons */
 }
 
 .printButton {
@@ -246,7 +252,7 @@
 .startOverButton {
   display: inline-flex;
   height: auto;
-  padding: 8px 4px;
+  padding: 12px 8px; /* kept increased padding for better visibility */
   justify-content: center;
   align-items: center;
   gap: 8px;
@@ -258,7 +264,7 @@
   text-align: center;
   font-feature-settings: "liga" off, "clig" off;
   font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 14px; /* restored original size */
   font-style: normal;
   font-weight: 700;
   line-height: 20px; /* 125% */
