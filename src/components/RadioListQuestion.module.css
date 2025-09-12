@@ -15,7 +15,7 @@
 
 .radioOption {
   display: flex;
-  width: 286px; /* exact width from Figma */
+  width: 100%;
   padding: 16px 40px; /* exact padding from Figma */
   align-items: center;
   gap: 24px; /* exact gap from Figma */
@@ -150,7 +150,6 @@
   }
 
   .radioOption {
-    width: 286px;
     padding: 16px 40px;
     gap: 24px;
   }

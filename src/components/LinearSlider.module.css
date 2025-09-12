@@ -112,9 +112,15 @@
   top: 50%;
   transform: translateY(-50%);
   width: var(--filled-width, 10%);
-  min-width: 63px; /* Minimum width as shown in Figma */
+  min-width: 0; /* allow zero width when value is 0; visual minimum handled in JS */
   transition: width 200ms ease;
   pointer-events: none;
+}
+
+/* When value is zero, hide the filled track and thumb glow to avoid the short line */
+.sliderContainer.zero .trackFilled,
+.sliderContainer.zero .sliderThumbGlow {
+  display: none;
 }
 
 /* Thumb glow effect */

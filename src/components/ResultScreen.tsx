@@ -141,6 +141,74 @@ const ResultScreen: FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayedSrc, onShare]);
 
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
+
+  const shareSticker = async () => {
+    let outSrc = stickerSource;
+    try {
+      outSrc = await composeSticker();
+    } catch {
+      outSrc = stickerSource;
+    }
+
+    // Attempt Web Share API with files if supported
+    try {
+      const title = `${resultAgent?.name || 'Agent'} Sticker`;
+      const text = 'Check out my AI agent sticker';
+
+      // Try sharing as file if supported
+      if (navigator.share) {
+        try {
+          // Try to fetch the image and share as a File if possible
+          const resp = await fetch(outSrc || '');
+          const blob = await resp.blob();
+          const file = new File([blob], 'sticker.png', { type: blob.type || 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ title, text, files: [file] });
+            setShareMessage('Shared successfully');
+            setTimeout(() => setShareMessage(null), 4000);
+            try { onShare(); } catch (e) {}
+            return;
+          }
+        } catch (err) {
+          // continue to try URL share
+        }
+
+        try {
+          await navigator.share({ title, text, url: outSrc });
+          setShareMessage('Shared successfully');
+          setTimeout(() => setShareMessage(null), 4000);
+          try { onShare(); } catch (e) {}
+          return;
+        } catch (err) {
+          // Fall through to clipboard fallback
+        }
+      }
+    } catch (err) {
+      // ignore and fallback
+    }
+
+    // Fallback: copy URL to clipboard
+    try {
+      if (outSrc) {
+        await navigator.clipboard.writeText(outSrc);
+        setShareMessage('Image URL copied to clipboard');
+        setTimeout(() => setShareMessage(null), 4000);
+        try { onShare(); } catch (e) {}
+        return;
+      }
+    } catch (err) {
+      // final fallback: open image in new tab
+      if (outSrc) {
+        window.open(outSrc, '_blank');
+        setShareMessage('Opened image in new tab');
+        setTimeout(() => setShareMessage(null), 4000);
+        try { onShare(); } catch (e) {}
+        return;
+      }
+    }
+  };
+
   const printSticker = async () => {
     if (isCountdownActive) {
       setCountdown(30);
@@ -352,9 +420,19 @@ const ResultScreen: FC<Props> = ({
               </div>
             )}
             <div className={styles.ctaSection}>
-              <button className={styles.printButton} onClick={printSticker}>
-                PRINT
-              </button>
+              <div className={styles.ctaRow}>
+                <Button variant="secondary" onClick={shareSticker} className={styles.shareButton}>
+                  SHARE
+                </Button>
+                <Button variant="primary" onClick={printSticker} className={styles.printButton}>
+                  PRINT
+                </Button>
+              </div>
+
+              {shareMessage && (
+                <div style={{ color: '#0ecc7e', marginTop: 8, fontWeight: 600 }}>{shareMessage}</div>
+              )}
+
               <div className={styles.startOverSection}>
                 <Button variant="link" className={styles.startOverButton} onClick={onRestart}>
                   START OVER

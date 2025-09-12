@@ -125,7 +125,7 @@
   box-shadow: 0 10px 20px 0 rgba(6, 6, 6, 0.1);
   /* use a pale, non-transparent background to ensure clear selected state */
   background: linear-gradient(180deg, #e8fff4 0%, #dff8fb 100%);
-  border: 2px solid #0ECC7E; /* explicit black border */
+  border: 2px solid #0ecc7e; /* explicit black border */
 }
 
 .optionIcon {

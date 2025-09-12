@@ -126,7 +126,7 @@ export async function generateViaOpenAI(prompt: string, selfieDataUrl?: string, 
   const useEdit = Boolean(selfieDataUrl) && photoStep !== 'skipped';
 
   if (useEdit && selfieDataUrl) {
-    // prepare personalized prompt
+    // prepare personalized prompt (prompt already includes background requirements from shared prompt)
     const personalizedPrompt = `${prompt}. Transform this into a square, full-bleed 1:1 sticker design (sized for 2x2 inches). Do NOT include rounded corners or any circular masking — produce a full-bleed square image that fills the canvas, with no text and no external borders. Keep the person's recognizable features integrated respectfully.`;
 
     const blob = await dataUrlToBlob(selfieDataUrl);
@@ -173,7 +173,7 @@ export async function generateViaOpenAI(prompt: string, selfieDataUrl?: string, 
   // Otherwise generate from text using gpt-image-1
   const payload = {
     model: 'gpt-image-1',
-    prompt,
+    prompt: prompt,
     size: '1024x1024',
     n: 1,
   };
