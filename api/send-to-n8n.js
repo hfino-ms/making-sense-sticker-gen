@@ -17,7 +17,6 @@ export default async function handler(req, res) {
       name: String(name || ''),
       timestamp: String(timestamp || new Date().toISOString()),
       sticker: String(sticker || ''),
-      photo: String(photo || ''),
       archetype: archetype || null,
       survey: survey || {}
     };

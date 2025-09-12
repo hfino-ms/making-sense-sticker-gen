@@ -1,30 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;700&display=swap");
 
 /* Theme variables are applied via data-theme on the html element. */
 html[data-theme="dark"] {
-  --primary-main: #0ECC7E;
-  --secondary-main: #53C0D2;
-  --gradient1-start: #0ECC7E;
-  --gradient1-end: #53C0D2;
-  --gradient1-textContrast: #F7FAFC; /* light text for high contrast on dark background */
+  --primary-main: #0ecc7e;
+  --secondary-main: #53c0d2;
+  --gradient1-start: #0ecc7e;
+  --gradient1-end: #53c0d2;
+  --gradient1-textContrast: #f7fafc; /* light text for high contrast on dark background */
 
   color-scheme: dark;
   color: var(--gradient1-textContrast);
-  --muted: rgba(247,250,252,0.8);
-  background: linear-gradient(180deg, rgba(12,18,24,0.92) 0%, rgba(16,24,32,0.9) 40%, rgba(22,32,44,0.88) 100%); /* richer dark gradient */
+  --muted: rgba(247, 250, 252, 0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(12, 18, 24, 0.92) 0%,
+    rgba(16, 24, 32, 0.9) 40%,
+    rgba(22, 32, 44, 0.88) 100%
+  ); /* richer dark gradient */
 }
 
 html[data-theme="light"] {
-  --primary-main: #0ECC7E;
-  --secondary-main: #53C0D2;
-  --gradient1-start: #0ECC7E;
-  --gradient1-end: #53C0D2;
+  --primary-main: #0ecc7e;
+  --secondary-main: #53c0d2;
+  --gradient1-start: #0ecc7e;
+  --gradient1-end: #53c0d2;
   --gradient1-textContrast: #111210; /* dark text for light backgrounds */
 
   color-scheme: light;
   color: var(--gradient1-textContrast);
-  --muted: rgba(17,18,16,0.6);
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(14,204,126,0.15), rgba(83,192,210,0.25));
+  --muted: rgba(17, 18, 16, 0.6);
 }
 
 /* Smooth theme transition */
@@ -34,22 +38,30 @@ html {
 
 /* Header should match stepper background exactly */
 .app-header {
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,251,250,0.88));
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(250, 251, 250, 0.88)
+  );
   backdrop-filter: blur(6px);
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-  box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.06);
   transition: background 420ms ease, transform 360ms ease;
 }
 
 html[data-theme="dark"] .app-header {
-  background: linear-gradient(180deg, rgba(6,10,14,0.98), rgba(8,12,18,0.96));
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 10, 14, 0.98),
+    rgba(8, 12, 18, 0.96)
+  );
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
-
 :root {
-  font-family: 'Red Hat Display', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Red Hat Display", system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

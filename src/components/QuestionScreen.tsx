@@ -34,7 +34,8 @@ const QuestionScreen: FC<Props> = ({
     // For dial questions, we map the value to the appropriate option
     let optionId = 'low';
     if (value >= 75) optionId = 'high';
-    else if (value >= 25) optionId = 'medium';
+    else if (value >= 50) optionId = 'moderate_high';
+    else if (value >= 25) optionId = 'moderate_low';
     onSelect(optionId, value);
   };
 

@@ -63,7 +63,18 @@ export default function PhotoCapture({ onConfirm, onSkip }: Props) {
         setLoading(false);
         return;
       }
-      ctx.drawImage(videoEl, sx, sy, size, size, 0, 0, size, size);
+      // If the webcam preview is mirrored (common for user-facing cameras),
+      // flip the canvas horizontally before drawing so the saved image is not mirrored.
+      const mirroredProp = (webcamRef.current as any)?.props?.mirrored;
+      if (mirroredProp) {
+        ctx.translate(size, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoEl, sx, sy, size, size, 0, 0, size, size);
+        // restore transform (not strictly necessary on a new canvas, but kept for clarity)
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      } else {
+        ctx.drawImage(videoEl, sx, sy, size, size, 0, 0, size, size);
+      }
       const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       setSnapshot(dataUrl);
     } catch (e) {

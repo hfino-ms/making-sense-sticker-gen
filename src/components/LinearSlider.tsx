@@ -126,7 +126,8 @@ const LinearSlider = ({ value, onChange }: Props) => {
         {/* Labels */}
         <div className={styles.labels}>
           <div className={styles.labelItem}>LOW</div>
-          <div className={styles.labelItem}>MEDIUM</div>
+          <div className={styles.labelItem}>MODERATE-LOW</div>
+          <div className={styles.labelItem}>MODERATE-HIGH</div>
           <div className={styles.labelItem}>HIGH</div>
         </div>
       </div>

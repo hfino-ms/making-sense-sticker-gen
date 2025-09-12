@@ -127,7 +127,9 @@
   height: 70px;
   border-radius: 50%;
   background: linear-gradient(90deg, #0ecc7e 0%, #53c0d2 100%);
-  fill-opacity: 0.5;
+  opacity: 1;
+  box-shadow: 0 10px 20px rgba(14, 204, 126, 0.15),
+    0 4px 10px rgba(83, 192, 210, 0.08);
   pointer-events: none;
   transition: left 200ms ease;
   z-index: 1;

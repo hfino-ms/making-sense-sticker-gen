@@ -46,7 +46,17 @@ export async function generateStickerAndCompose({ agent, survey, variant, photo 
     try {
       // Try new HTML-based approach first
       if (agent?.name || agent?.key) {
-        const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+        // Map agent key to a specific frame overlay URL so each archetype gets its own frame
+        const FRAME_MAP: Record<string, string> = {
+          integrator: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F36ddb163aecf4607ae7f3136c6d2a7fa?format=png&width=2000',
+          deal_hunter: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F530b9323aa6f426cb1543cc036aab13b?format=png&width=2000',
+          transformer: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2Ff1890e2416d841a1bd81a075bb8f5d49?format=png&width=2000',
+          risk_balancer: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2Fe8b17a6f965d4303a193561747e24489?format=png&width=2000',
+          visionary: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F1e486f47baf14c56a0655d049071b8f9?format=png&width=2000'
+        };
+        const defaultFrame = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+        const frameUrl = FRAME_MAP[String(agent.key).toLowerCase()] || defaultFrame;
+
         composedDataUrl = await composeStickerWithHtmlLabel(source, agent.name || agent.key, {
           stickerSize: 1024,
           frameUrl,
@@ -75,7 +85,15 @@ export async function generateStickerAndCompose({ agent, survey, variant, photo 
         try {
           // Try HTML approach first
           if (agent?.name || agent?.key) {
-            const frameUrl = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+            const FRAME_MAP: Record<string, string> = {
+              integrator: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F36ddb163aecf4607ae7f3136c6d2a7fa?format=png&width=2000',
+              deal_hunter: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F530b9323aa6f426cb1543cc036aab13b?format=png&width=2000',
+              transformer: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2Ff1890e2416d841a1bd81a075bb8f5d49?format=png&width=2000',
+              risk_balancer: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2Fe8b17a6f965d4303a193561747e24489?format=png&width=2000',
+              visionary: 'https://cdn.builder.io/api/v1/image/assets%2F6ba43b4c1bf9477e9a28cc511e7171f9%2F1e486f47baf14c56a0655d049071b8f9?format=png&width=2000'
+            };
+            const defaultFrame = 'https://cdn.builder.io/api/v1/image/assets%2Fae236f9110b842838463c282b8a0dfd9%2F22ecb8e2464b40dd8952c31710f2afe2?format=png&width=2000';
+            const frameUrl = FRAME_MAP[String(agent.key).toLowerCase()] || defaultFrame;
             composedDataUrl = await composeStickerWithHtmlLabel(dataUrl, agent.name || agent.key, {
               stickerSize: 1024,
               frameUrl,

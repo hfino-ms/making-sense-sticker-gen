@@ -8,141 +8,25 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background: transparent;
+  background: transparent; /* page background set to white */
 }
 
-/* Animated Background Theme Overlay */
+/* Animated Background removed — static overlay only */
 .themeOverlay {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0;
   visibility: hidden;
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  transform: scale(1);
-  transition: none;
-  backdrop-filter: none;
+  background: transparent;
   overflow: hidden;
 }
 
-/* Enable overlay animations once overlay-ready is present */
 :global(html.overlay-ready) .themeOverlay {
   visibility: visible;
   opacity: 1;
-  transition: opacity 300ms linear, background-position 900ms ease-in-out,
-    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  backdrop-filter: blur(6px) saturate(1.02);
-}
-
-/* Particle Animation */
-.themeParticle {
-  position: absolute;
-  border-radius: 50%;
-  will-change: transform, opacity;
-  opacity: 0.9;
-  animation-name: particleMove;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  top: var(--tp-top);
-  left: var(--tp-left);
-  width: var(--tp-size);
-  height: var(--tp-size);
-  background: var(--tp-bg);
-  box-shadow: var(--tp-shadow);
-  transform-origin: var(--tp-transform-origin);
-  animation-duration: var(--tp-duration);
-  animation-delay: var(--tp-delay);
-}
-
-@keyframes particleMove {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(6vw, -3vh, 0) rotate(180deg);
-  }
-  100% {
-    transform: translate3d(0, 0, 0) rotate(360deg);
-  }
-}
-
-/* Light Theme Background */
-:global(html[data-theme="light"]) .themeOverlay {
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.98),
-    rgba(247, 249, 248, 0.98)
-  );
-  background-color: #ffffff;
-  transform: scale(1.02);
-  background-repeat: no-repeat;
-  background-size: 44% 44%, 40% 40%;
-  background-position: 10% 24%, 86% 28%;
-  background-image: radial-gradient(
-      circle at 10% 24%,
-      rgba(14, 204, 126, 0.65) 0%,
-      rgba(14, 204, 126, 0.35) 30%,
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 86% 28%,
-      rgba(83, 192, 210, 0.55) 0%,
-      rgba(83, 192, 210, 0.24) 30%,
-      transparent 60%
-    );
-  animation: blobsMove 6s ease-in-out infinite;
-  filter: saturate(1.05) contrast(1.04);
-}
-
-/* Dark Theme Background */
-:global(html[data-theme="dark"]) .themeOverlay {
-  background-image: linear-gradient(
-    180deg,
-    rgba(2, 4, 6, 0.99),
-    rgba(3, 5, 8, 0.99)
-  );
-  background-color: #02060a;
-  transform: scale(1);
-  background-repeat: no-repeat;
-  background-size: 42% 42%, 38% 38%;
-  background-position: 12% 18%, 88% 22%;
-  background-image: radial-gradient(
-      circle at 12% 18%,
-      rgba(14, 204, 126, 0.48) 0%,
-      rgba(14, 204, 126, 0.22) 30%,
-      transparent 60%
-    ),
-    radial-gradient(
-      circle at 88% 22%,
-      rgba(83, 192, 210, 0.38) 0%,
-      rgba(83, 192, 210, 0.16) 30%,
-      transparent 60%
-    );
-  animation: blobsMove 7s ease-in-out infinite reverse;
-  filter: saturate(1.02) contrast(1.06);
-}
-
-@keyframes blobsMove {
-  0% {
-    background-position: 10% 24%, 86% 28%;
-    background-size: 44% 44%, 40% 40%;
-    filter: blur(10px) saturate(1.03);
-    opacity: 1;
-  }
-  50% {
-    background-position: 6% 18%, 90% 32%;
-    background-size: 42% 42%, 42% 42%;
-    filter: blur(18px) saturate(1.06);
-  }
-  100% {
-    background-position: 12% 20%, 88% 26%;
-    background-size: 42% 42%, 38% 38%;
-    filter: blur(12px) saturate(1.03);
-    opacity: 1;
-  }
+  transition: none;
+  backdrop-filter: none;
 }
 
 /* Header */
@@ -320,12 +204,10 @@
 
   :global(html[data-theme="light"]) .themeOverlay {
     background-size: 34% 34%, 30% 30%;
-    animation: blobsMove 10s ease-in-out infinite;
   }
 
   :global(html[data-theme="dark"]) .themeOverlay {
     background-size: 32% 32%, 28% 28%;
-    animation: blobsMove 12s ease-in-out infinite reverse;
   }
 
   .stepper {
@@ -335,5 +217,154 @@
   .logo {
     width: 180px;
     height: 23px;
+  }
+}
+
+/* Hero background animation (optimized, minimal DOM/CSS) */
+.heroAnimationWrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -2; /* behind header and content */
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  transform: none !important;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.heroAnimation {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  overflow: visible;
+}
+
+.heroAnimation span {
+  width: 50vmin;
+  height: 50vmin;
+  border-radius: 50vmin;
+  backface-visibility: hidden;
+  position: absolute;
+  will-change: transform, opacity;
+  box-shadow: 0 0 0 currentColor; /* baseline, overridden below */
+}
+
+/* Keyframes */
+@keyframes mainShape {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 10vh, 0);
+  }
+}
+@keyframes moveRight {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(20vmin, 10vmin, 0);
+  }
+}
+@keyframes opacity {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes grow {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.2);
+  }
+}
+@keyframes move {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(2vmin, 20vh, 0);
+  }
+  100% {
+    transform: translate3d(10%, -50vh, 10px);
+  }
+}
+
+/* Individual shapes */
+.heroAnimation span:nth-child(1) {
+  color: #1edd8e;
+  height: 100vmin;
+  top: 40vh;
+  left: -140vmin;
+  animation: mainShape 2s ease-in-out infinite alternate;
+  transform-origin: 0 0;
+  box-shadow: 100vmin 0 13.384vmin currentColor;
+  opacity: 0.5;
+  z-index: 2;
+}
+.heroAnimation span:nth-child(2) {
+  color: #1edd8e;
+  width: 100vmin;
+  bottom: 20vh;
+  left: -180vmin;
+  animation: moveRight 3s ease-in-out infinite alternate;
+  animation-delay: 6s;
+  transform-origin: 0 0;
+  box-shadow: 100vmin 0 13.384vmin currentColor;
+  opacity: 0.3;
+}
+.heroAnimation span:nth-child(3) {
+  color: #53c0d2;
+  bottom: 10vh;
+  left: -120vmin;
+  box-shadow: 100vmin 0 13.384vmin currentColor;
+  animation: opacity 4s ease-in-out infinite alternate;
+}
+.heroAnimation span:nth-child(4) {
+  color: #ffffff;
+  bottom: 50vh;
+  left: -110vh;
+  box-shadow: 100vmin 0 13.384vmin currentColor;
+  animation: move 8s ease-in-out infinite alternate;
+  z-index: 1;
+}
+.heroAnimation span:nth-child(5) {
+  color: #53c0d2;
+  top: -10vh;
+  right: -150vmin;
+  transform-origin: 0 0;
+  box-shadow: -100vmin 0 13.384vmin currentColor;
+  animation: grow 2s ease-in-out infinite alternate;
+  z-index: 1;
+}
+.heroAnimation span:nth-child(6) {
+  color: #1edd8e;
+  top: 0vh;
+  right: -110vmin;
+  transform-origin: 0 0;
+  box-shadow: -100vmin 0 13.384vmin currentColor;
+  animation: moveRight 4s ease-in-out infinite alternate;
+  animation-delay: 4s;
+}
+.heroAnimation span:nth-child(7) {
+  color: #ffffff;
+  top: 20vh;
+  right: 90vh;
+  box-shadow: 100vmin 0 13.384vmin currentColor;
+  animation: opacity 2s ease-in-out infinite alternate;
+  z-index: 10;
+}
+
+/* Reduce motion for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .heroAnimation span {
+    animation: none !important;
   }
 }

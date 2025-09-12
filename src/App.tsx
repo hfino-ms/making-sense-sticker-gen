@@ -201,7 +201,6 @@ function App() {
           name: userName || '',
           timestamp: new Date().toISOString(),
           sticker: imageUrl,
-          photo: capturedPhoto || '',
           archetype: (agentResult as any)?.name || (agentResult as any)?.key || null,
           survey: surveyObj
         };
