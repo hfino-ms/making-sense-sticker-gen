@@ -339,17 +339,18 @@ const ResultScreen: FC<Props> = ({
             <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
               <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} />
             </div>
-            <div
-              style={{
-                visibility: isCountdownActive ? "visible" : "hidden",
-                margin: "16px 0",
-                color: "#0ecc7e",
-                fontWeight: 600,
-                fontSize: 20,
-              }}
-            >
-              <p>Redirecting to start in {countdown} seconds...</p>
-            </div>
+            {isCountdownActive && (
+              <div
+                style={{
+                  margin: "16px 0",
+                  color: "#0ecc7e",
+                  fontWeight: 600,
+                  fontSize: 20,
+                }}
+              >
+                <p>Redirecting to start in {countdown} seconds...</p>
+              </div>
+            )}
             <div className={styles.ctaSection}>
               <button className={styles.printButton} onClick={printSticker}>
                 PRINT
