@@ -258,7 +258,7 @@
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
-  line-height: 22px; /* 122.222% */
+  line-height: 1.5; /* 122.222% */
 }
 
 .loadingDescription {
@@ -270,7 +270,7 @@
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
-  line-height: 22px;
+  line-height: 1.5;
 }
 
 /* Step 3: Services */

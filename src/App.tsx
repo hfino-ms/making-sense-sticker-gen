@@ -305,6 +305,7 @@ function App() {
       {step === STEPS.Photo && (
         <PhotoCapture onConfirm={(dataUrl?: string) => preparePrompt(dataUrl)} onSkip={() => preparePrompt(undefined)} />
       )}
+      
       {step === STEPS.Generating && <LoadingScreen />}
         {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onRestart={restart} />}
       </MotionSection>

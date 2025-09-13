@@ -5,22 +5,17 @@ import MotionSection from './MotionSection';
 const LoadingScreen = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const carouselRef = useRef<HTMLDivElement | null>(null);
-  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     const STEP_DURATION = 6500;
-
     const interval = setInterval(() => {
       setCurrentStep(prevStep => {
+        console.log(prevStep);
         if (prevStep >= 3) {
-          {/*
-            clearInterval(interval);
-            */}
-            return prevStep -2;
-          }
-
-          return prevStep + 1;
-        });
+          return prevStep;
+        }
+        return prevStep + 1;
+      });
     }, STEP_DURATION);
 
     return () => clearInterval(interval);
@@ -73,13 +68,6 @@ const LoadingScreen = () => {
       pointerMove(clientX);
     };
 
-    // Add scroll listener to update indicators
-    const onScroll = () => {
-      if (!el) return;
-      const cardWidth = 310 + 24; // card width + gap
-      const newIndex = Math.round(el.scrollLeft / cardWidth);
-      setCarouselIndex(newIndex);
-    };
 
     el.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointerup', onPointerUp);
@@ -87,7 +75,6 @@ const LoadingScreen = () => {
     el.addEventListener('touchstart', onTouchStart, { passive: false });
     el.addEventListener('touchmove', onTouchMove, { passive: false });
     el.addEventListener('touchend', onPointerUp);
-    el.addEventListener('scroll', onScroll);
 
     return () => {
       el.removeEventListener('pointerdown', onPointerDown);
@@ -96,7 +83,6 @@ const LoadingScreen = () => {
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchmove', onTouchMove);
       el.removeEventListener('touchend', onPointerUp);
-      el.removeEventListener('scroll', onScroll);
     };
   }, []);
 
@@ -199,15 +185,6 @@ const LoadingScreen = () => {
             </svg>
             <span>Digital Transformation & Enablement</span> 
           </div>
-        </div>
-        
-        <div className={styles.carouselIndicators}>
-          {[0, 1, 2, 3, 4].map((index) => (
-            <div 
-              key={index}
-              className={`${styles.indicator} ${carouselIndex === index ? styles.indicatorActive : ''}`}
-            />
-          ))}
         </div>
       </div>
     </div>

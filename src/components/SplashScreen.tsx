@@ -53,6 +53,7 @@ const SplashScreen = ({ onStart }: Props) => {
         </div>
       </div>
     </MotionSection>
+    
   );
 };
 

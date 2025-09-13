@@ -52,7 +52,8 @@
   font-family: "Red Hat Display", -apple-system, Roboto, Helvetica, sans-serif;
   font-size: 18px; /* restored original size */
   font-style: normal;
-  line-height: 22px; /* restored original line-height */
+  line-height: 1.5; /* restored original line-height */
+  text-wrap:balance;
   margin-bottom: 15px; /* reduced from 25px to 15px for more space for buttons */
 }
 
@@ -402,3 +403,40 @@
     opacity: 1;
   }
 }
+
+
+.toast {
+  color: #000000;
+  margin-top: 8px;
+  font-weight: 600;
+  min-width: 30vw;
+  left: 50%;
+  transform: translateX(-50%);
+  position: absolute;
+  bottom: calc(10px + var(--footer-height));
+  padding: 20px 24px;
+  background: linear-gradient(90deg, #0ecc7d3d 0%, #53c0d23d 100%);
+  border: 1px solid  #0ecc7d;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 5px 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.fadeOut {
+  -webkit-animation-name: fadeOut;
+  animation-name: fadeOut;
+  -webkit-animation-duration: 2s;
+  animation-duration: 2s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+@-webkit-keyframes fadeOut {
+  0% {opacity: 1;}
+  50% {opacity: 1;}
+  100% {opacity: 0;}
+}
+@keyframes fadeOut {
+  0% {opacity: 1;}
+  50% {opacity: 1;}
+  100% {opacity: 0;}
+} 
