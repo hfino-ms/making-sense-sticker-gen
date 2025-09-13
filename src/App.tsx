@@ -52,41 +52,10 @@ function App() {
   // Set default theme
   useEffect(() => {
     setThemeOnDocument('light');
-
-    // ONE-TIME fullscreen attempt triggered by first user interaction (gesture required by browsers)
-    let attemptedFull = false;
-    const tryFullscreen = async () => {
-      if (attemptedFull) return;
-      attemptedFull = true;
-      try {
-        const el = document.documentElement as any;
-        if (el.requestFullscreen) await el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
-        // when fullscreen entered, the browser chrome will be hidden on supported devices
-      } catch (err) {
-        // ignore errors — many browsers will refuse or require user gesture
-        console.debug('tryFullscreen failed', err);
-      }
-      // remove listener after attempt
-      window.removeEventListener('pointerdown', tryFullscreen);
-    };
-    window.addEventListener('pointerdown', tryFullscreen, { once: true });
-
-    return () => {
-      try { window.removeEventListener('pointerdown', tryFullscreen); } catch (err) { console.debug('removeEventListener failed', err); }
-    };
   }, []);
 
   const handleSelect = (optId: string, intensity?: number) => {
     setAnswers(prev => ({ ...prev, [currentQuestion.id]: { choice: optId, intensity } }));
-
-    // When on the 'innovation' question (screen #2) and user chooses 'disruptive', switch to dark theme
-    if (currentQuestion.id === 'innovation' && optId === 'disruptive') {
-      setThemeOnDocument('dark');
-    } else if (currentQuestion.id === 'innovation') {
-      setThemeOnDocument('light');
-    }
   };
 
   const handleNext = () => {
@@ -336,7 +305,6 @@ function App() {
       {step === STEPS.Photo && (
         <PhotoCapture onConfirm={(dataUrl?: string) => preparePrompt(dataUrl)} onSkip={() => preparePrompt(undefined)} />
       )}
-
       {step === STEPS.Generating && <LoadingScreen />}
         {step === STEPS.Result && result && <ResultScreen result={result} userName={userName} userEmail={userEmail} agent={agentResult} onShare={submitAndStay} onPrint={submitAndStay} onRestart={restart} />}
       </MotionSection>

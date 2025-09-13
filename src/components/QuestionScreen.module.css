@@ -8,9 +8,7 @@
 .questionMain {
   display: flex;
   width: 100%;
-  min-height: calc(
-    100vh - 144px - 40px
-  ); /* Subtract header + stepper + footer */
+  height: calc(100vh - var(--footer-height) - var(--header-height)); /* exact height instead of min-height */
   padding: 40px 24px;
   flex-direction: column;
   justify-content: center;

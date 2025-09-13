@@ -421,12 +421,17 @@ const ResultScreen: FC<Props> = ({
             )}
             <div className={styles.ctaSection}>
               <div className={styles.ctaRow}>
+                <Button variant="primary" onClick={shareSticker} className={styles.printButton}>
+                  PRINT
+                </Button>
+                {/*
                 <Button variant="secondary" onClick={shareSticker} className={styles.shareButton}>
                   SHARE
                 </Button>
                 <Button variant="primary" onClick={printSticker} className={styles.printButton}>
                   PRINT
-                </Button>
+                  </Button> 
+                */}
               </div>
 
               {shareMessage && (
