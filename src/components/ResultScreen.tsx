@@ -13,7 +13,6 @@ type Props = {
   userEmail?: string;
   agent?: { key: string; name: string } | null;
   onShare: () => void;
-  onPrint: () => void;
   onRestart?: () => void;
 };
 
@@ -22,7 +21,6 @@ const ResultScreen: FC<Props> = ({
   userName,
   agent,
   onShare,
-  onPrint,
   onRestart,
 }) => {
   const imageUrl = (result as any)?.imageUrl || "";
@@ -144,6 +142,9 @@ const ResultScreen: FC<Props> = ({
   const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const shareSticker = async () => {
+    if (isCountdownActive) {
+      setCountdown(30);
+    }    
     let outSrc = stickerSource;
     try {
       outSrc = await composeSticker();
@@ -207,59 +208,8 @@ const ResultScreen: FC<Props> = ({
         return;
       }
     }
-  };
-
-  const printSticker = async () => {
-    if (isCountdownActive) {
-      setCountdown(30);
-    }
-    let outSrc = stickerSource;
-    try {
-      outSrc = await composeSticker();
-    } catch {
-      outSrc = stickerSource;
-    }
-
-    const printFrame = document.createElement("iframe");
-    printFrame.style.position = "fixed";
-    printFrame.style.right = "0";
-    printFrame.style.bottom = "0";
-    printFrame.style.width = "0";
-    printFrame.style.height = "0";
-    printFrame.style.border = "0";
-    printFrame.style.visibility = "hidden";
-    document.body.appendChild(printFrame);
-
-    const doc = printFrame.contentWindow?.document;
-    if (!printFrame.contentWindow || !doc) {
-      if (document.body.contains(printFrame)) {
-        document.body.removeChild(printFrame);
-      }
-      onPrint();
-      setIsCountdownActive(true);
-      setCountdown(30);
-      return;
-    }
-
-    doc.open();
-    doc.write(`<html><head><title>${
-      resultAgent?.name || "Agent"
-    } Sticker</title><style>
-      html,body{height:100%;margin:0}
-      .print-body{height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
-      .print-image{max-width:90vw;max-height:90vh;object-fit:contain;}
-    </style></head><body class="print-body">
-      <img src="${outSrc}" class="print-image"/>
-    </body></html>`);
-    doc.close();
-    printFrame.contentWindow.focus();
-    printFrame.contentWindow.print();
-
     setTimeout(() => {
-      if (document.body.contains(printFrame)) {
-        document.body.removeChild(printFrame);
-      }
-      onPrint();
+      onShare();
       setIsCountdownActive(true);
       setCountdown(30);
     }, 1000);
