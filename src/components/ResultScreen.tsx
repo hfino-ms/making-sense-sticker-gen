@@ -141,110 +141,110 @@ const ResultScreen: FC<Props> = ({
 
   const [shareMessage, setShareMessage] = useState<string | null>(null);
 
-{/* 
-  async function shareImgElement(img: HTMLImageElement, filename = "sticker.png") {
-    if (isCountdownActive) {
-      console.log('Countdown already active, ignoring share attempt');
-      setCountdown(30);
-    }        
-    const url = img.currentSrc || img.src;
+  // =========================
+  // ADDED FUNCTIONS (ONLY)
+  // =========================
 
-    // 1) Get a Blob of the image
-    const res = await fetch(url, { mode: "cors" });
-    // If the response is "opaque" due to missing CORS, Blob may be empty
-    const blob = await res.blob();
-
-    // 2) Wrap as a File (helps some share targets)
-    const type = blob.type || "image/png";
-    const file = new File([blob], filename, { type });
-
-    // 3) Share via iOS native share sheet
-    if (!("share" in navigator)) throw new Error("Web Share API not supported");
-    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
-      throw new Error("Device cannot share files");
-    }
-    await navigator.share({
-      files: [file],
-      title: "Print with HP Sprocket",
-      text: "Ready to print",
+  // Re-encode any src (http(s) or data:) into a FRESH PNG via <canvas>,
+  // then share it as a File so iOS shows preview + photo actions.
+  async function reencodeSrcToPngBlob(src: string): Promise<Blob> {
+    // Load image
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      // Allow data: and same-origin without CORS hassle; remote http(s) still display-only
+      i.crossOrigin = "anonymous";
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = src;
     });
-    
-    setShareMessage('Shared successfully');
-    setTimeout(() => setShareMessage(null), 4000);
-    
-    setTimeout(() => {
-      onShare();
-      setIsCountdownActive(true);
-      setCountdown(30);
-    }, 1000);
-  
-  }
-*/}
-  
-  async function shareImgElement(img: HTMLImageElement, filename = "sticker.png") {
-    if (isCountdownActive) {
-      console.log('Countdown already active, ignoring share attempt');
-      setCountdown(30);
-    }            
-    // Prepare a canvas sized to what you want to print
-    const w = 1024, h = 1024; // example target size
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d")!;
-    // drawImage can crop/scale as needed
-    ctx.drawImage(img, 0, 0, w, h);
 
-    // Prefer toBlob when available; fallback via dataURL → fetch → blob
-    const blob = await new Promise<Blob>(resolve => {
+    // Draw to canvas at natural size (no scaling artifacts)
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, img.naturalWidth || img.width || 1024);
+    canvas.height = Math.max(1, img.naturalHeight || img.height || 1024);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No 2D context");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // Prefer toBlob; fallback via dataURL
+    const blob: Blob = await new Promise<Blob>((resolve) => {
       if ("toBlob" in canvas) {
-        console.log('IF sharing URL', img.currentSrc || img.src);
-        (canvas as HTMLCanvasElement).toBlob(b => resolve(b as Blob), "image/png", 1);
+        (canvas as HTMLCanvasElement).toBlob(
+          (b) => resolve((b as Blob) || new Blob()),
+          "image/png",
+          1
+        );
       } else {
         const dataUrl = (canvas as HTMLCanvasElement).toDataURL("image/png", 1);
-        console.log('ELSE sharing URL', img.currentSrc || img.src);
-        fetch(dataUrl).then(r => r.blob()).then(resolve);
+        fetch(dataUrl).then((r) => r.blob()).then(resolve);
       }
     });
-    
-    const file = new File([blob], filename, { type: "image/png" });
-    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
-      throw new Error("Device cannot share files");
-    }
-    console.log('blob', blob.type, blob.size); 
-    await navigator.share({ files: [file], title: "Print with HP Sprocket" });
 
-    setShareMessage('Shared successfully');
-    setTimeout(() => setShareMessage(null), 4000);
-    
-    setTimeout(() => {
-      onShare();
-      setIsCountdownActive(true);
-      setCountdown(30);
-    }, 1000);
+    // Force PNG MIME just in case
+    if (blob.type !== "image/png") {
+      return new Blob([await blob.arrayBuffer()], { type: "image/png" });
+    }
+    return blob;
   }
 
-  useEffect(() => {
-    if (!isCountdownActive) {
-      if (countdownInterval.current) clearInterval(countdownInterval.current);
-      return;
+  async function sharePngFromSrc(src: string, filename = "sticker.png") {
+    // If it’s already a data: URL, skip fetch ambiguity and re-encode
+    let pngBlob: Blob;
+    if (src.startsWith("data:")) {
+      pngBlob = await reencodeSrcToPngBlob(src);
+    } else {
+      // Remote/local URL → try fetch; if type is wrong/empty, re-encode
+      try {
+        const resp = await fetch(src, { mode: "cors" });
+        const b = await resp.blob();
+        pngBlob =
+          b.type === "image/png" && b.size > 0
+            ? b
+            : await reencodeSrcToPngBlob(src);
+      } catch {
+        // Any fetch hiccup → re-encode via <img>/<canvas>
+        pngBlob = await reencodeSrcToPngBlob(src);
+      }
     }
-    setCountdown(30);
-    countdownInterval.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          if (countdownInterval.current)
-            clearInterval(countdownInterval.current);
-          if (onRestart) onRestart();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => {
-      if (countdownInterval.current) clearInterval(countdownInterval.current);
-    };
-  }, [isCountdownActive, onRestart]);
+
+    // Wrap as a proper PNG File (extension matters on iOS)
+    const safeName = filename.endsWith(".png") ? filename : `${filename}.png`;
+    const file = new File([pngBlob], safeName, { type: "image/png" });
+
+    // iOS share sheet (files-only) — this is what preserves preview/actions
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+      throw new Error("This device cannot share image files.");
+    }
+    await navigator.share({ files: [file] });
+    setShareMessage("Shared!");
+  }
+
+  // Backward-compatible wrappers (names you already used elsewhere)
+  async function shareImgElement(imgEl: HTMLImageElement, filename = "sticker.png") {
+    const src = imgEl?.currentSrc || imgEl?.src || "";
+    if (!src) throw new Error("No image src");
+    return sharePngFromSrc(src, filename);
+  }
+  async function shareImageFile(input: HTMLImageElement | string | Blob, filename = "sticker.png") {
+    if (input instanceof HTMLImageElement) {
+      return shareImgElement(input, filename);
+    }
+    if (typeof input === "string") {
+      return sharePngFromSrc(input, filename);
+    }
+    // Blob path: normalize into PNG File and share
+    const png =
+      input.type === "image/png" ? input : new Blob([await input.arrayBuffer()], { type: "image/png" });
+    const file = new File([png], filename.endsWith(".png") ? filename : `${filename}.png`, { type: "image/png" });
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+      throw new Error("This device cannot share image files.");
+    }
+    return navigator.share({ files: [file] });
+  }
+
+  // =========================
+  // END ADDED FUNCTIONS
+  // =========================
 
   const getPersonalityData = () => {
     if (!resultAgent) return null;
@@ -364,29 +364,27 @@ const ResultScreen: FC<Props> = ({
               </div>
             )}
             <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
-              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} id="sticker" 
-              onClick={async () => {
-const el = document.getElementById('sticker') as HTMLImageElement | null;
-if (!el) return;
-const prev = el.src;
-const composed = displayedSrc || prev;
-try {
-el.src = composed;
-await shareImgElement(el, 'sticker.jpg');
-} finally {
-el.src = prev;
-}
-}}
-              />
+              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} id="sticker" onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} />
             </div>
             {isCountdownActive && (
               <div className={styles.toast}>Redirecting to start in {countdown} seconds...</div>
             )}
             <div className={styles.ctaSection}>
               <div className={styles.ctaRow}>
-                <Button variant="primary" 
-                  onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} 
-                  className={styles.printButton}>
+                {/* MODIFIED: PRINT button (only) */}
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    // Prefer displayedSrc when available; falls back to the <img> if needed.
+                    if (displayedSrc) {
+                      sharePngFromSrc(displayedSrc, "sticker.png");
+                    } else {
+                      const img = document.getElementById("sticker") as HTMLImageElement | null;
+                      if (img) shareImgElement(img, "sticker.png");
+                    }
+                  }}
+                  className={styles.printButton}
+                >
                   PRINT
                 </Button>
               </div>
