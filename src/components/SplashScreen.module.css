@@ -87,7 +87,12 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+  .heroDescription p:first-child {
+    margin-top: 0;
+  }
+  .heroDescription p:last-child {
+    margin-bottom: 0;
+  }
 .heroButton {
   display: flex;
   align-items: flex-start;
@@ -130,6 +135,9 @@
   .heroDescription {
     font-size: 14px;
     line-height: 18px;
+  }
+  .heroDescription br {
+    display: none;
   }
 }
 

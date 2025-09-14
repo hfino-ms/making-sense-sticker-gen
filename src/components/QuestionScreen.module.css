@@ -1,3 +1,7 @@
+:root {
+  --stepper-height: 64px;
+  
+}
 .questionScreen {
   width: 100%;
   background: transparent; /* allow theme-overlay background to show */
@@ -8,7 +12,7 @@
 .questionMain {
   display: flex;
   width: 100%;
-  height: calc(100vh - var(--footer-height) - var(--header-height)); /* exact height instead of min-height */
+  height: calc(100vh - var(--footer-height) - var(--header-height) - var(--stepper-height)); /* exact height instead of min-height */
   padding: 40px 24px;
   flex-direction: column;
   justify-content: center;
@@ -45,8 +49,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
   align-self: stretch;
+  justify-content: space-evenly;
 }
 
 .questionTitle {
@@ -244,9 +249,8 @@
 @media (max-width: 768px) {
   .questionMain {
     padding: 20px 24px;
-    min-height: calc(100vh - 144px - 40px);
+    /*min-height: calc(100vh - 144px - 40px);*/
   }
-
   .questionTitle {
     font-size: 36px;
     line-height: 40px;
@@ -281,16 +285,13 @@
     height: 56px;
   }
 
-  /* reduce bottom spacing on smaller screens but keep enough room for nav */
-  .questionSection {
-    padding-bottom: 84px;
-  }
 }
 
 @media (max-width: 480px) {
   .questionMain {
     padding: 16px;
-    min-height: calc(100vh - 144px - 40px);
+    /*min-height: calc(100vh - 144px - 40px);*/
+
   }
 
   .questionContent {
@@ -310,7 +311,7 @@
   .questionOption {
     width: 160px;
     height: 100px;
-    padding: 12px 30px 20px 30px;
+    padding: 12px 16px 20px;
   }
 
   .optionIcon {
@@ -339,7 +340,7 @@
   }
 
   .questionSection {
-    padding-bottom: 76px;
+    padding-bottom: 0;
   }
 }
 
@@ -390,5 +391,17 @@
   }
   .questionOptions {
     gap: 32px;
+  }
+}
+@media (max-height: 843px) {
+  .questionSection {
+    gap: 20px; /* further increased gap for better separation between content and buttons */
+    padding-bottom: 0;
+  }
+  
+}
+@media (min-height: 844px) and (max-height: 1023px) {
+  .questionSection {
+    gap: 40px;
   }
 }

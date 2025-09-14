@@ -15,10 +15,9 @@
   display: flex;
   width: 100%;
   max-width: 690px; /* match Figma design */
-  padding-top: 24px;
   flex-direction: column;
   align-items: center;
-  gap: 60px; /* match Figma design */
+  gap: 20px; /* match Figma design */
   text-align: center;
 }
 
@@ -65,7 +64,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px; /* match Figma design spacing */
+  gap: 40px; /* match Figma design spacing */
   width: 100%;
   max-width: 498px; /* match Figma input width */
 }
@@ -170,7 +169,7 @@
   }
 
   .emailScreen {
-    justify-content: flex-start;
+    justify-content: center;
   }
 }
 
@@ -187,7 +186,6 @@
   }
 
   .emailSection {
-    gap: 60px;
     max-width: 690px;
   }
 }
