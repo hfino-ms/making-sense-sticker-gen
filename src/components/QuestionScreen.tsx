@@ -115,14 +115,16 @@ const QuestionScreen: FC<Props> = ({
 
           {renderQuestionContent()}
 
-          <div className={styles.questionNavigation}>
-            <Button variant="secondary" onClick={onPrevious} disabled={step === 1}>
-              PREVIOUS
-            </Button>
-            <Button variant="primary" onClick={onNext} disabled={!selected}>
-              {step === total ? 'FINISH' : 'NEXT'}
-            </Button>
-          </div>
+          <MotionSection animateKey={`nav-${question.id}`} duration={360}>
+            <div className={styles.questionNavigation}>
+                <Button variant="secondary" onClick={onPrevious} disabled={step === 1}>
+                  PREVIOUS
+                </Button>
+                <Button variant="primary" onClick={onNext} disabled={!selected}>
+                  {step === total ? 'FINISH' : 'NEXT'}
+                </Button>
+            </div>
+         </MotionSection>
         </div>
       </div>
     </div>
