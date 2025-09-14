@@ -198,17 +198,20 @@ const ResultScreen: FC<Props> = ({
     // Prefer toBlob when available; fallback via dataURL → fetch → blob
     const blob = await new Promise<Blob>(resolve => {
       if ("toBlob" in canvas) {
+        console.log('IF sharing URL', img.currentSrc || img.src);
         (canvas as HTMLCanvasElement).toBlob(b => resolve(b as Blob), "image/png", 1);
       } else {
         const dataUrl = (canvas as HTMLCanvasElement).toDataURL("image/png", 1);
+        console.log('ELSE sharing URL', img.currentSrc || img.src);
         fetch(dataUrl).then(r => r.blob()).then(resolve);
       }
     });
-
+    
     const file = new File([blob], filename, { type: "image/png" });
     if (navigator.canShare && !navigator.canShare({ files: [file] })) {
       throw new Error("Device cannot share files");
     }
+    console.log('blob', blob.type, blob.size); 
     await navigator.share({ files: [file], title: "Print with HP Sprocket" });
 
     setShareMessage('Shared successfully');
@@ -361,14 +364,29 @@ const ResultScreen: FC<Props> = ({
               </div>
             )}
             <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
-              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} id="sticker"  onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} />
+              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} id="sticker" 
+              onClick={async () => {
+const el = document.getElementById('sticker') as HTMLImageElement | null;
+if (!el) return;
+const prev = el.src;
+const composed = displayedSrc || prev;
+try {
+el.src = composed;
+await shareImgElement(el, 'sticker.jpg');
+} finally {
+el.src = prev;
+}
+}}
+              />
             </div>
             {isCountdownActive && (
               <div className={styles.toast}>Redirecting to start in {countdown} seconds...</div>
             )}
             <div className={styles.ctaSection}>
               <div className={styles.ctaRow}>
-                <Button variant="primary" onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} className={styles.printButton}>
+                <Button variant="primary" 
+                  onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} 
+                  className={styles.printButton}>
                   PRINT
                 </Button>
               </div>
