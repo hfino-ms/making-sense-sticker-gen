@@ -180,7 +180,6 @@ const ResultScreen: FC<Props> = ({
   
   }
 */}
-  
   async function shareImgElement(img: HTMLImageElement, filename = "sticker.png") {
     if (isCountdownActive) {
       console.log('Countdown already active, ignoring share attempt');
@@ -361,14 +360,16 @@ const ResultScreen: FC<Props> = ({
               </div>
             )}
             <div className={[styles.resultImageArea, stickerVisible ? styles.stickerVisible : styles.stickerHidden].join(' ')}>
-              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} id="sticker"/>
+              <img src={stickerSource || ''} alt="Result sticker" className={styles.resultImage} onClick={() => shareImgElement(document.getElementById("sticker"))} id="sticker"/>
             </div>
             {isCountdownActive && (
               <div className={styles.toast}>Redirecting to start in {countdown} seconds...</div>
             )}
             <div className={styles.ctaSection}>
               <div className={styles.ctaRow}>
-                <Button variant="primary" onClick={() => shareImgElement(document.getElementById("sticker") as HTMLImageElement)} className={styles.printButton}>
+                <Button variant="primary" 
+                  onClick={() => shareImgElement(document.getElementById("sticker"))} 
+                  className={styles.printButton}>
                   PRINT
                 </Button>
               </div>

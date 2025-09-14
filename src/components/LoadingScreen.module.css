@@ -312,7 +312,7 @@
 
 .serviceCard {
   display: flex;
-  width: 310px;
+  min-width: 310px;
   padding: 24px;
   align-items: center;
   gap: 8px;
@@ -331,6 +331,7 @@
   text-align: left;
   scroll-snap-align: center;
   user-select: none;
+  white-space: nowrap;
 }
 
 .serviceCard svg {
